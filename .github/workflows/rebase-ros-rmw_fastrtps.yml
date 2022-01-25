@@ -5,11 +5,11 @@ on:
   - cron: '0 0 * * *'
   # scheduled every midnight
   workflow_dispatch:
-  #manual run of the workflow job
+  # manual run of the workflow job
 
 jobs:
-  rebase-master:
-    name: Rebase HEAD with upstream ros2/rmw_fastrtps:master
+  rebase-current-branch:
+    name: Rebase HEAD with upstream current branch
     runs-on: ubuntu-latest
 
     steps:
@@ -17,18 +17,17 @@ jobs:
     - name: Checkout target repo
       uses: actions/checkout@v2
       with:
-        ref: master
         fetch-depth: 0
 
       # Step 2: rebase action (REQUIRED)
-    - name: Rebase branch to upstream changes
+    - name: Rebase current branch to upstream changes
       id: rebase
       run: |
         git remote add ros https://github.com/ros2/rmw_fastrtps.git
-        git fetch ros master
+        git fetch ros ${GITHUB_REF##*/}
         git config --local user.email "ricardogonzalez@eprosima.com"
         git config --local user.name "richiprosima"
-        git rebase ros/master
+        git rebase ros/${GITHUB_REF##*/}
         if [ "$(git status | grep diverged)" ]; then
           git push -f
         fi;
