@@ -16,6 +16,9 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <fstream>
+#include <functional>
+#include <utility>
 
 #include "fastdds/dds/core/status/StatusMask.hpp"
 #include "fastdds/dds/domain/DomainParticipantFactory.hpp"
@@ -32,6 +35,7 @@
 #include "fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.h"
 
 #include "rcpputils/scope_exit.hpp"
+#include "rcpputils/filesystem_helper.hpp"
 #include "rcutils/filesystem.h"
 #include "rcutils/get_env.h"
 
@@ -44,36 +48,117 @@
 #include "rmw_fastrtps_shared_cpp/utils.hpp"
 
 #if HAVE_SECURITY
+// Processor for security attributes with FILE URI
+bool
+process_file_uri_security_file(
+  const std::string & prefix, const rcpputils::fs::path & full_path,
+  std::string & result)
+{
+  if (!full_path.is_regular_file()) {
+    return false;
+  }
+  result = prefix + full_path.string();
+  return true;
+}
+
+// Processor for security attributes with PKCS#11 URI
+bool
+process_pkcs_uri_security_file(
+  const std::string & /*prefix*/, const rcpputils::fs::path & full_path,
+  std::string & result)
+{
+  const std::string p11_prefix("pkcs11:");
+
+  std::ifstream ifs(full_path.string());
+  if (!ifs.is_open()) {
+    return false;
+  }
+  if (!(ifs >> result)) {
+    return false;
+  }
+  if (result.find(p11_prefix) != 0) {
+    return false;
+  }
+
+  return true;
+}
+
 static
 bool
-get_security_file_paths(
-  std::array<std::string, 6> & security_files_paths, const char * secure_root)
+get_security_files(
+  const std::string & prefix, const std::string & secure_root,
+  std::unordered_map<std::string, std::string> & result)
 {
-  // here assume only 6 files for security
-  const char * file_names[6] = {
-    "identity_ca.cert.pem", "cert.pem", "key.pem",
-    "permissions_ca.cert.pem", "governance.p7s", "permissions.p7s"
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+  using std::placeholders::_3;
+  using security_file_processor =
+    std::function<bool (const std::string &, const rcpputils::fs::path &, std::string &)>;
+  using processor_vector =
+    std::vector<std::pair<std::string, security_file_processor>>;
+
+  // Key: the security attribute
+  // Value: ordered sequence of pairs. Each pair contains one possible file name
+  //        for the attribute and the corresponding processor method
+  // Pairs are ordered by priority: the first one matching is used.
+  const std::unordered_map<std::string, processor_vector> required_files{
+    {"IDENTITY_CA", {
+      {"identity_ca.cert.pem", std::bind(process_file_uri_security_file, _1, _2, _3)},
+      {"identity_ca.cert.p11", std::bind(process_pkcs_uri_security_file, _1, _2, _3)}}},
+    {"CERTIFICATE", {
+      {"cert.pem", std::bind(process_file_uri_security_file, _1, _2, _3)},
+      {"cert.p11", std::bind(process_pkcs_uri_security_file, _1, _2, _3)}}},
+    {"PRIVATE_KEY", {
+      {"key.pem", std::bind(process_file_uri_security_file, _1, _2, _3)},
+      {"key.p11", std::bind(process_pkcs_uri_security_file, _1, _2, _3)}}},
+    {"PERMISSIONS_CA", {
+      {"permissions_ca.cert.pem", std::bind(process_file_uri_security_file, _1, _2, _3)},
+      {"permissions_ca.cert.p11", std::bind(process_pkcs_uri_security_file, _1, _2, _3)}}},
+    {"GOVERNANCE", {
+      {"governance.p7s", std::bind(process_file_uri_security_file, _1, _2, _3)}}},
+    {"PERMISSIONS", {
+      {"permissions.p7s", std::bind(process_file_uri_security_file, _1, _2, _3)}}},
   };
-  size_t num_files = sizeof(file_names) / sizeof(char *);
 
-  std::string file_prefix("file://");
+  const std::unordered_map<std::string, processor_vector> optional_files{
+    {"CRL", {
+      {"crl.pem", std::bind(process_file_uri_security_file, _1, _2, _3)}}}
+  };
 
-  for (size_t i = 0; i < num_files; i++) {
-    rcutils_allocator_t allocator = rcutils_get_default_allocator();
-    char * file_path = rcutils_join_path(secure_root, file_names[i], allocator);
-
-    if (!file_path) {
+  for (const std::pair<const std::string,
+    std::vector<std::pair<std::string, security_file_processor>>> & el : required_files)
+  {
+    std::string attribute_value;
+    bool processed = false;
+    for (auto & proc : el.second) {
+      rcpputils::fs::path full_path(secure_root);
+      full_path /= proc.first;
+      if (proc.second(prefix, full_path, attribute_value)) {
+        processed = true;
+        break;
+      }
+    }
+    if (!processed) {
+      result.clear();
       return false;
     }
+    result[el.first] = attribute_value;
+  }
 
-    if (rcutils_is_readable(file_path)) {
-      security_files_paths[i] = file_prefix + std::string(file_path);
-    } else {
-      allocator.deallocate(file_path, allocator.state);
-      return false;
+  for (const std::pair<const std::string, processor_vector> & el : optional_files) {
+    std::string attribute_value;
+    bool processed = false;
+    for (auto & proc : el.second) {
+      rcpputils::fs::path full_path(secure_root);
+      full_path /= proc.first;
+      if (proc.second(prefix, full_path, attribute_value)) {
+        processed = true;
+        break;
+      }
     }
-
-    allocator.deallocate(file_path, allocator.state);
+    if (processed) {
+      result[el.first] = attribute_value;
+    }
   }
 
   return true;
@@ -264,36 +349,37 @@ rmw_fastrtps_shared_cpp::create_participant(
   if (security_options->security_root_path) {
     // if security_root_path provided, try to find the key and certificate files
 #if HAVE_SECURITY
-    std::array<std::string, 6> security_files_paths;
-    if (get_security_file_paths(security_files_paths, security_options->security_root_path)) {
+    std::unordered_map<std::string, std::string> security_files_paths;
+    if (get_security_files(
+        "file://", security_options->security_root_path, security_files_paths)) {
       eprosima::fastrtps::rtps::PropertyPolicy property_policy;
-      using Property = eprosima::fastrtps::rtps::Property;
       property_policy.properties().emplace_back(
-        Property("dds.sec.auth.plugin", "builtin.PKI-DH"));
+        "dds.sec.auth.plugin", "builtin.PKI-DH");
       property_policy.properties().emplace_back(
-        Property(
-          "dds.sec.auth.builtin.PKI-DH.identity_ca", security_files_paths[0]));
+        "dds.sec.auth.builtin.PKI-DH.identity_ca", security_files_paths["IDENTITY_CA"]);
       property_policy.properties().emplace_back(
-        Property(
-          "dds.sec.auth.builtin.PKI-DH.identity_certificate", security_files_paths[1]));
+        "dds.sec.auth.builtin.PKI-DH.identity_certificate", security_files_paths["CERTIFICATE"]);
       property_policy.properties().emplace_back(
-        Property(
-          "dds.sec.auth.builtin.PKI-DH.private_key", security_files_paths[2]));
+        "dds.sec.auth.builtin.PKI-DH.private_key", security_files_paths["PRIVATE_KEY"]);
       property_policy.properties().emplace_back(
-        Property("dds.sec.crypto.plugin", "builtin.AES-GCM-GMAC"));
+        "dds.sec.crypto.plugin", "builtin.AES-GCM-GMAC");
 
       property_policy.properties().emplace_back(
-        Property(
-          "dds.sec.access.plugin", "builtin.Access-Permissions"));
+        "dds.sec.access.plugin", "builtin.Access-Permissions");
       property_policy.properties().emplace_back(
-        Property(
-          "dds.sec.access.builtin.Access-Permissions.permissions_ca", security_files_paths[3]));
+        "dds.sec.access.builtin.Access-Permissions.permissions_ca",
+        security_files_paths["PERMISSIONS_CA"]);
       property_policy.properties().emplace_back(
-        Property(
-          "dds.sec.access.builtin.Access-Permissions.governance", security_files_paths[4]));
+        "dds.sec.access.builtin.Access-Permissions.governance",
+        security_files_paths["GOVERNANCE"]);
       property_policy.properties().emplace_back(
-        Property(
-          "dds.sec.access.builtin.Access-Permissions.permissions", security_files_paths[5]));
+        "dds.sec.access.builtin.Access-Permissions.permissions",
+        security_files_paths["PERMISSIONS"]);
+
+      if (security_files_paths.count("CRL") > 0) {
+        property_policy.properties().emplace_back(
+          "dds.sec.auth.builtin.PKI-DH.identity_crl", security_files_paths["CRL"]);
+      }
 
       // Configure security logging
       if (!apply_security_logging_configuration(property_policy)) {
