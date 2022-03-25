@@ -5,30 +5,59 @@ on:
   - cron: '0 0 * * *'
   # scheduled every midnight
   workflow_dispatch:
-  # manual run of the workflow job
+  #manual run of the workflow job
 
 jobs:
-  rebase-current-branch:
+  rebase-branches:
     name: Rebase HEAD with upstream current branch
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        dest_branch: ['master', 'galactic', 'vulcanexus', 'vulcanexus-galactic']
+        
     steps:
       # Step 1: run a standard checkout action, provided by github (REQUIRED)
     - name: Checkout target repo
       uses: actions/checkout@v2
       with:
+        ref: ${{ matrix.dest_branch }}
         fetch-depth: 0
 
-      # Step 2: rebase action (REQUIRED)
-    - name: Rebase current branch to upstream changes
-      id: rebase
+      # Step 2: Set git config and add remote (REQUIRED)
+    - name: Set git config and add remote
+      id: config
       run: |
-        git remote add ros https://github.com/ros2/rmw_fastrtps.git
-        git fetch ros ${GITHUB_REF##*/}
         git config --local user.email "ricardogonzalez@eprosima.com"
         git config --local user.name "richiprosima"
-        git rebase ros/${GITHUB_REF##*/}
-        if [ "$(git status | grep diverged)" ]; then
+        git remote add ros https://github.com/ros2/rmw_fastrtps.git
+      shell: bash
+
+      # Step 3: Rebase
+    - name: Rebase current branch to upstream changes
+      id: rebase_master_galactic
+      run: |
+        git fetch ros ${{ matrix.dest_branch }}
+        git rebase ros/${{ matrix.dest_branch }}
+      shell: bash
+      if: matrix.dest_branch == 'master' || matrix.dest_branch == 'galactic'
+    - id: rebase_vulcanexus
+      run: |
+        git fetch ros master
+        git rebase ros/master
+      shell: bash
+      if: matrix.dest_branch == 'vulcanexus'
+    - id: rebase_vulcanexus_galactic
+      run: |
+        git fetch ros galactic
+        git rebase ros/galactic
+      shell: bash
+      if: matrix.dest_branch == 'vulcanexus-galactic'
+
+      # Step 4: Push
+    - name: Force push if required
+      id: push
+      run: |
+        if [ "$(git status | grep 'diverged\|ahead')" ]; then
           git push -f
         fi;
       shell: bash
