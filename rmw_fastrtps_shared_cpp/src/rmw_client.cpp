@@ -67,7 +67,8 @@ __rmw_destroy_client(
   }
 
   auto show_previous_error =
-    [&final_ret]() {
+    [&final_ret]()
+    {
       if (RMW_RET_OK != final_ret) {
         RMW_SAFE_FWRITE_TO_STDERR(rmw_get_error_string().str);
         RMW_SAFE_FWRITE_TO_STDERR(" during '" RCUTILS_STRINGIFY(__function__) "'\n");
@@ -123,7 +124,7 @@ __rmw_destroy_client(
   rmw_free(const_cast<char *>(client->service_name));
   rmw_client_free(client);
 
-  RCUTILS_CAN_RETURN_WITH_ERROR_OF(RMW_RET_ERROR);  // on completion
+  RCUTILS_CAN_RETURN_WITH_ERROR_OF(RMW_RET_ERROR);   // on completion
   return final_ret;
 }
 
@@ -161,4 +162,5 @@ __rmw_client_set_on_new_response_callback(
     callback);
   return RMW_RET_OK;
 }
+
 }  // namespace rmw_fastrtps_shared_cpp

@@ -93,9 +93,6 @@ _take(
 
   while (0 < info->data_reader_->get_unread_count()) {
     if (info->data_reader_->take_next_sample(&data, &sinfo) == ReturnCode_t::RETCODE_OK) {
-      // Update hasData from listener
-      info->listener_->update_has_data(info->data_reader_);
-
       if (subscription->options.ignore_local_publications) {
         auto sample_writer_guid =
           eprosima::fastrtps::rtps::iHandle2GUID(sinfo.publication_handle);
@@ -196,7 +193,7 @@ __rmw_take_event(
     return RMW_RET_ERROR);
 
   auto event = static_cast<CustomEventInfo *>(event_handle->data);
-  if (event->getListener()->takeNextEvent(event_handle->event_type, event_info)) {
+  if (event->get_listener()->take_event(event_handle->event_type, event_info)) {
     *taken = true;
     return RMW_RET_OK;
   }
@@ -319,15 +316,12 @@ _take_serialized_message(
   data.impl = nullptr;    // not used when is_cdr_buffer is true
 
   if (info->data_reader_->take_next_sample(&data, &sinfo) == ReturnCode_t::RETCODE_OK) {
-    // Update hasData from listener
-    info->listener_->update_has_data(info->data_reader_);
-
     if (sinfo.valid_data) {
       auto buffer_size = static_cast<size_t>(buffer.getBufferSize());
       if (serialized_message->buffer_capacity < buffer_size) {
         auto ret = rmw_serialized_message_resize(serialized_message, buffer_size);
         if (ret != RMW_RET_OK) {
-          return ret;  // Error message already set
+          return ret;           // Error message already set
         }
       }
       serialized_message->buffer_length = buffer_size;
@@ -395,7 +389,8 @@ struct GenericSequence : public eprosima::fastdds::dds::LoanableCollection
 {
   GenericSequence() = default;
 
-  void resize(size_type /*new_length*/) override
+  void resize(
+    size_type /*new_length*/) override
   {
     // This kind of collection should only be used with loans
     throw std::bad_alloc();
@@ -410,18 +405,21 @@ struct LoanManager
     eprosima::fastdds::dds::SampleInfoSeq info_seq{};
   };
 
-  explicit LoanManager(const eprosima::fastrtps::ResourceLimitedContainerConfig & items_cfg)
+  explicit LoanManager(
+    const eprosima::fastrtps::ResourceLimitedContainerConfig & items_cfg)
   : items(items_cfg)
   {
   }
 
-  void add_item(std::unique_ptr<Item> item)
+  void add_item(
+    std::unique_ptr<Item> item)
   {
     std::lock_guard<std::mutex> guard(mtx);
     items.push_back(std::move(item));
   }
 
-  std::unique_ptr<Item> erase_item(void * loaned_message)
+  std::unique_ptr<Item> erase_item(
+    void * loaned_message)
   {
     std::unique_ptr<Item> ret{nullptr};
 
@@ -488,7 +486,6 @@ __rmw_take_loaned_message_internal(
       }
       *loaned_message = item->data_seq.buffer()[0];
       *taken = true;
-      info->listener_->update_has_data(info->data_reader_);
 
       info->loan_manager_->add_item(std::move(item));
 
@@ -501,7 +498,6 @@ __rmw_take_loaned_message_internal(
 
   // No data available, return loan information.
   *taken = false;
-  info->listener_->update_has_data(info->data_reader_);
   return RMW_RET_OK;
 }
 
@@ -536,4 +532,5 @@ __rmw_return_loaned_message_from_subscription(
   RMW_SET_ERROR_MSG("Trying to return message not loaned by this subscription");
   return RMW_RET_ERROR;
 }
+
 }  // namespace rmw_fastrtps_shared_cpp

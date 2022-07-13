@@ -54,23 +54,40 @@ __rmw_take_response(
 
   CustomClientResponse response;
 
-  if (info->listener_->getResponse(response)) {
-    auto raw_type_support = dynamic_cast<rmw_fastrtps_shared_cpp::TypeSupport *>(
-      info->response_type_support_.get());
-    eprosima::fastcdr::Cdr deser(
-      *response.buffer_,
-      eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
-      eprosima::fastcdr::Cdr::DDS_CDR);
-    if (raw_type_support->deserializeROSmessage(
-        deser, ros_response, info->response_type_support_impl_))
-    {
-      request_header->source_timestamp = response.sample_info_.source_timestamp.to_ns();
-      request_header->received_timestamp = response.sample_info_.reception_timestamp.to_ns();
-      request_header->request_id.sequence_number =
-        ((int64_t)response.sample_identity_.sequence_number().high) <<
-        32 | response.sample_identity_.sequence_number().low;
+  // Todo(sloretz) eliminate heap allocation pending eprosima/Fast-CDR#19
+  response.buffer_.reset(new eprosima::fastcdr::FastBuffer());
+  rmw_fastrtps_shared_cpp::SerializedData data;
+  data.is_cdr_buffer = true;
+  data.data = response.buffer_.get();
+  data.impl = nullptr;      // not used when is_cdr_buffer is true
+  if (info->response_reader_->take_next_sample(
+      &data,
+      &response.sample_info_) == ReturnCode_t::RETCODE_OK)
+  {
+    if (response.sample_info_.valid_data) {
+      response.sample_identity_ = response.sample_info_.related_sample_identity;
 
-      *taken = true;
+      if (response.sample_identity_.writer_guid() == info->reader_guid_ ||
+        response.sample_identity_.writer_guid() == info->writer_guid_)
+      {
+        auto raw_type_support = dynamic_cast<rmw_fastrtps_shared_cpp::TypeSupport *>(
+          info->response_type_support_.get());
+        eprosima::fastcdr::Cdr deser(
+          *response.buffer_,
+          eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
+          eprosima::fastcdr::Cdr::DDS_CDR);
+        if (raw_type_support->deserializeROSmessage(
+            deser, ros_response, info->response_type_support_impl_))
+        {
+          request_header->source_timestamp = response.sample_info_.source_timestamp.to_ns();
+          request_header->received_timestamp = response.sample_info_.reception_timestamp.to_ns();
+          request_header->request_id.sequence_number =
+            ((int64_t)response.sample_identity_.sequence_number().high) <<
+            32 | response.sample_identity_.sequence_number().low;
+
+          *taken = true;
+        }
+      }
     }
   }
 
@@ -143,4 +160,5 @@ __rmw_send_response(
 
   return returnedValue;
 }
+
 }  // namespace rmw_fastrtps_shared_cpp
