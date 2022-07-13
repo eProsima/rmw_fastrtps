@@ -374,7 +374,7 @@ rmw_create_client(
     return nullptr;
   }
 
-  // Creates DataWriter
+  // Creates DataWriter with a mask enabling publication_matched calls for the listener
   info->request_writer_ = publisher->create_datawriter(
     request_topic.topic,
     writer_qos,
@@ -386,6 +386,7 @@ rmw_create_client(
     return nullptr;
   }
 
+  // Set the StatusCondition to none to prevent triggering via WaitSets
   info->request_writer_->get_statuscondition().set_enabled_statuses(
     eprosima::fastdds::dds::StatusMask::none());
 
