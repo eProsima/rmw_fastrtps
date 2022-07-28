@@ -18,11 +18,13 @@
 #include <atomic>
 #include <condition_variable>
 #include <list>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <set>
-#include <utility>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "fastcdr/FastBuffer.h"
 
@@ -80,7 +82,7 @@ class ClientListener : public eprosima::fastdds::dds::DataReaderListener
 public:
   explicit ClientListener(CustomClientInfo * info)
   : info_(info), list_has_data_(false),
-    conditionMutex_(nullptr), conditionVariable_(nullptr) {}
+    conditionVariableList_() {}
 
 
   void
@@ -96,7 +98,7 @@ public:
     data.is_cdr_buffer = true;
     data.data = response.buffer_.get();
     data.impl = nullptr;    // not used when is_cdr_buffer is true
-    if (reader->take_next_sample(&data, &response.sample_info_) == ReturnCode_t::RETCODE_OK) {
+    while (reader->take_next_sample(&data, &response.sample_info_) == ReturnCode_t::RETCODE_OK) {
       if (response.sample_info_.valid_data) {
         response.sample_identity_ = response.sample_info_.related_sample_identity;
 
@@ -105,15 +107,20 @@ public:
         {
           std::lock_guard<std::mutex> lock(internalMutex_);
 
-          if (conditionMutex_ != nullptr) {
-            std::unique_lock<std::mutex> clock(*conditionMutex_);
+          if (!conditionVariableList_.empty()) {
+            std::vector<std::unique_lock<std::mutex>> vlock;
+            for (auto && m: mutexList_) {
+              vlock.emplace_back(*m);
+            }
             list.emplace_back(std::move(response));
             // the change to list_has_data_ needs to be mutually exclusive with
             // rmw_wait() which checks hasData() and decides if wait() needs to
             // be called
             list_has_data_.store(true);
-            clock.unlock();
-            conditionVariable_->notify_one();
+            vlock.clear();
+            for (auto && c : conditionVariableList_) {
+              c.first->notify_all();
+            }
           } else {
             list.emplace_back(std::move(response));
             list_has_data_.store(true);
@@ -128,8 +135,11 @@ public:
   {
     std::lock_guard<std::mutex> lock(internalMutex_);
 
-    if (conditionMutex_ != nullptr) {
-      std::unique_lock<std::mutex> clock(*conditionMutex_);
+    if (!conditionVariableList_.empty()) {
+      std::vector<std::unique_lock<std::mutex>> vlock;
+      for (auto && m: mutexList_) {
+        vlock.emplace_back(*m);
+      }
       return popResponse(response);
     }
     return popResponse(response);
@@ -139,16 +149,27 @@ public:
   attachCondition(std::mutex * conditionMutex, std::condition_variable * conditionVariable)
   {
     std::lock_guard<std::mutex> lock(internalMutex_);
-    conditionMutex_ = conditionMutex;
-    conditionVariable_ = conditionVariable;
+    conditionVariableList_.insert(std::make_pair(conditionVariable, conditionMutex));
+    mutexList_.emplace_back(conditionMutex);
+    std::sort(mutexList_.begin(), mutexList_.end());
   }
 
   void
-  detachCondition()
+  detachCondition(std::condition_variable * conditionVariable)
   {
     std::lock_guard<std::mutex> lock(internalMutex_);
-    conditionMutex_ = nullptr;
-    conditionVariable_ = nullptr;
+    std::map<std::condition_variable *, std::mutex *>::iterator it =
+      std::find_if(conditionVariableList_.begin(), conditionVariableList_.end(),
+      [=](std::pair<std::condition_variable *, std::mutex *> in)
+        {
+          return conditionVariable == in.first;
+        }
+      );
+    if (it != conditionVariableList_.end())
+    {
+      mutexList_.erase(std::find(mutexList_.begin(), mutexList_.end(),it->second));
+      conditionVariableList_.erase(it);  
+    }
   }
 
   bool
@@ -190,8 +211,10 @@ private:
   std::mutex internalMutex_;
   std::list<CustomClientResponse> list RCPPUTILS_TSA_GUARDED_BY(internalMutex_);
   std::atomic_bool list_has_data_;
-  std::mutex * conditionMutex_ RCPPUTILS_TSA_GUARDED_BY(internalMutex_);
-  std::condition_variable * conditionVariable_ RCPPUTILS_TSA_GUARDED_BY(internalMutex_);
+  std::map<std::condition_variable *, std::mutex *> conditionVariableList_ RCPPUTILS_TSA_GUARDED_BY(
+    internalMutex_);
+  std::vector<std::mutex *> mutexList_;
+
   std::set<eprosima::fastrtps::rtps::GUID_t> publishers_;
 };
 

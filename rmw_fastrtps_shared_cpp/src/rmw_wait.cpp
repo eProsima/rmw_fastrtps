@@ -195,7 +195,7 @@ __rmw_wait(
     for (size_t i = 0; i < subscriptions->subscriber_count; ++i) {
       void * data = subscriptions->subscribers[i];
       auto custom_subscriber_info = static_cast<CustomSubscriberInfo *>(data);
-      custom_subscriber_info->listener_->detachCondition();
+      custom_subscriber_info->listener_->detachCondition(conditionVariable);
       if (!custom_subscriber_info->listener_->hasData()) {
         subscriptions->subscribers[i] = 0;
       }
@@ -206,7 +206,7 @@ __rmw_wait(
     for (size_t i = 0; i < clients->client_count; ++i) {
       void * data = clients->clients[i];
       auto custom_client_info = static_cast<CustomClientInfo *>(data);
-      custom_client_info->listener_->detachCondition();
+      custom_client_info->listener_->detachCondition(conditionVariable);
       if (!custom_client_info->listener_->hasData()) {
         clients->clients[i] = 0;
       }
@@ -217,7 +217,7 @@ __rmw_wait(
     for (size_t i = 0; i < services->service_count; ++i) {
       void * data = services->services[i];
       auto custom_service_info = static_cast<CustomServiceInfo *>(data);
-      custom_service_info->listener_->detachCondition();
+      custom_service_info->listener_->detachCondition(conditionVariable);
       if (!custom_service_info->listener_->hasData()) {
         services->services[i] = 0;
       }
@@ -228,7 +228,7 @@ __rmw_wait(
     for (size_t i = 0; i < events->event_count; ++i) {
       auto event = static_cast<rmw_event_t *>(events->events[i]);
       auto custom_event_info = static_cast<CustomEventInfo *>(event->data);
-      custom_event_info->getListener()->detachCondition();
+      custom_event_info->getListener()->detachCondition(conditionVariable);
       if (!custom_event_info->getListener()->hasEvent(event->event_type)) {
         events->events[i] = nullptr;
       }
@@ -239,7 +239,7 @@ __rmw_wait(
     for (size_t i = 0; i < guard_conditions->guard_condition_count; ++i) {
       void * data = guard_conditions->guard_conditions[i];
       auto guard_condition = static_cast<GuardCondition *>(data);
-      guard_condition->detachCondition();
+      guard_condition->detachCondition(conditionVariable);
       if (!guard_condition->getHasTriggered()) {
         guard_conditions->guard_conditions[i] = 0;
       }

@@ -17,6 +17,7 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <map>
 #include <mutex>
 #include <set>
 
@@ -61,8 +62,7 @@ public:
   explicit PubListener(CustomPublisherInfo * info)
   : deadline_changes_(false),
     liveliness_changes_(false),
-    conditionMutex_(nullptr),
-    conditionVariable_(nullptr)
+    conditionVariableList_()
   {
     (void) info;
   }
@@ -115,16 +115,27 @@ public:
   attachCondition(std::mutex * conditionMutex, std::condition_variable * conditionVariable)
   {
     std::lock_guard<std::mutex> lock(internalMutex_);
-    conditionMutex_ = conditionMutex;
-    conditionVariable_ = conditionVariable;
+    conditionVariableList_.insert(std::make_pair(conditionVariable, conditionMutex));
+    mutexList_.emplace_back(conditionMutex);
+    std::sort(mutexList_.begin(), mutexList_.end());
   }
 
   void
-  detachCondition()
+  detachCondition(std::condition_variable * conditionVariable)
   {
     std::lock_guard<std::mutex> lock(internalMutex_);
-    conditionMutex_ = nullptr;
-    conditionVariable_ = nullptr;
+    std::map<std::condition_variable *, std::mutex *>::iterator it =
+      std::find_if(conditionVariableList_.begin(), conditionVariableList_.end(),
+      [=](std::pair<std::condition_variable *, std::mutex *> in)
+        {
+          return conditionVariable == in.first;
+        }
+      );
+    if (it != conditionVariableList_.end())
+    {
+      mutexList_.erase(std::find(mutexList_.begin(), mutexList_.end(),it->second));
+      conditionVariableList_.erase(it);  
+    }
   }
 
 private:
@@ -141,8 +152,9 @@ private:
   eprosima::fastdds::dds::LivelinessLostStatus liveliness_lost_status_
     RCPPUTILS_TSA_GUARDED_BY(internalMutex_);
 
-  std::mutex * conditionMutex_ RCPPUTILS_TSA_GUARDED_BY(internalMutex_);
-  std::condition_variable * conditionVariable_ RCPPUTILS_TSA_GUARDED_BY(internalMutex_);
+  std::map<std::condition_variable *, std::mutex *> conditionVariableList_ RCPPUTILS_TSA_GUARDED_BY(
+    internalMutex_);
+  std::vector<std::mutex *> mutexList_;
 };
 
 #endif  // RMW_FASTRTPS_SHARED_CPP__CUSTOM_PUBLISHER_INFO_HPP_

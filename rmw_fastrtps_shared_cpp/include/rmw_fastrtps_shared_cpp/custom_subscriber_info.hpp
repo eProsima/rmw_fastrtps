@@ -15,8 +15,10 @@
 #ifndef RMW_FASTRTPS_SHARED_CPP__CUSTOM_SUBSCRIBER_INFO_HPP_
 #define RMW_FASTRTPS_SHARED_CPP__CUSTOM_SUBSCRIBER_INFO_HPP_
 
+#include <algorithm>
 #include <atomic>
 #include <condition_variable>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -70,8 +72,7 @@ public:
   : data_(false),
     deadline_changes_(false),
     liveliness_changes_(false),
-    conditionMutex_(nullptr),
-    conditionVariable_(nullptr)
+    conditionVariableList_()
   {
     // Field is not used right now
     (void)info;
@@ -126,16 +127,27 @@ public:
   attachCondition(std::mutex * conditionMutex, std::condition_variable * conditionVariable)
   {
     std::lock_guard<std::mutex> lock(internalMutex_);
-    conditionMutex_ = conditionMutex;
-    conditionVariable_ = conditionVariable;
+    conditionVariableList_.insert(std::make_pair(conditionVariable, conditionMutex));
+    mutexList_.emplace_back(conditionMutex);
+    std::sort(mutexList_.begin(), mutexList_.end());
   }
 
   void
-  detachCondition()
+  detachCondition(std::condition_variable * conditionVariable)
   {
     std::lock_guard<std::mutex> lock(internalMutex_);
-    conditionMutex_ = nullptr;
-    conditionVariable_ = nullptr;
+    std::map<std::condition_variable *, std::mutex *>::iterator it =
+      std::find_if(conditionVariableList_.begin(), conditionVariableList_.end(),
+      [=](std::pair<std::condition_variable *, std::mutex *> in)
+        {
+          return conditionVariable == in.first;
+        }
+      );
+    if (it != conditionVariableList_.end())
+    {
+      mutexList_.erase(std::find(mutexList_.begin(), mutexList_.end(),it->second));
+      conditionVariableList_.erase(it);  
+    }
   }
 
   bool
@@ -153,7 +165,7 @@ public:
     bool has_data = unread_count > 0;
 
     std::lock_guard<std::mutex> lock(internalMutex_);
-    ConditionalScopedLock clock(conditionMutex_, conditionVariable_);
+    ConditionalScopedLock clock(conditionVariableList_);
     data_.store(has_data, std::memory_order_relaxed);
   }
 
@@ -176,8 +188,9 @@ private:
   eprosima::fastdds::dds::LivelinessChangedStatus liveliness_changed_status_
     RCPPUTILS_TSA_GUARDED_BY(internalMutex_);
 
-  std::mutex * conditionMutex_ RCPPUTILS_TSA_GUARDED_BY(internalMutex_);
-  std::condition_variable * conditionVariable_ RCPPUTILS_TSA_GUARDED_BY(internalMutex_);
+  std::map<std::condition_variable *, std::mutex *> conditionVariableList_ RCPPUTILS_TSA_GUARDED_BY(
+    internalMutex_);
+  std::vector<std::mutex *> mutexList_;
 
   std::set<eprosima::fastrtps::rtps::GUID_t> publishers_ RCPPUTILS_TSA_GUARDED_BY(internalMutex_);
 };

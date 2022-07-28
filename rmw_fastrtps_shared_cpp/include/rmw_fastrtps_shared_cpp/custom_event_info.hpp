@@ -18,6 +18,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <list>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <utility>
@@ -41,7 +42,8 @@ public:
     std::condition_variable * conditionVariable) = 0;
 
   /// Unset the information from attachCondition.
-  virtual void detachCondition() = 0;
+  virtual void detachCondition(
+    std::condition_variable * conditionVariable) = 0;
 
   /// Check if there is new data available for a specific event type.
   /**
@@ -64,28 +66,28 @@ class EventListenerInterface::ConditionalScopedLock
 {
 public:
   ConditionalScopedLock(
-    std::mutex * mutex,
-    std::condition_variable * condition_variable = nullptr)
-  : mutex_(mutex), cv_(condition_variable)
+    const std::map<std::condition_variable *, std::mutex *> & condition_variable_list = {})
+  : cv_list_(condition_variable_list)
   {
-    if (nullptr != mutex_) {
-      mutex_->lock();
+    if (!cv_list_.empty()) {
+      for (auto & c: cv_list_) {
+        c.second->lock();
+      }
     }
   }
 
   ~ConditionalScopedLock()
   {
-    if (nullptr != mutex_) {
-      mutex_->unlock();
-      if (nullptr != cv_) {
-        cv_->notify_all();
+    if (!cv_list_.empty()) {
+      for (auto & c: cv_list_) {
+        c.second->unlock();
+        c.first->notify_all();
       }
     }
   }
 
 private:
-  std::mutex * mutex_;
-  std::condition_variable * cv_;
+  std::map<std::condition_variable *, std::mutex *> cv_list_;
 };
 
 struct CustomEventInfo
