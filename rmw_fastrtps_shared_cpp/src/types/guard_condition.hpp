@@ -59,26 +59,13 @@ public:
   {
     std::lock_guard<std::mutex> lock(internalMutex_);
     conditionVariableList_.insert(std::make_pair(conditionVariable, conditionMutex));
-    mutexList_.emplace_back(conditionMutex);
-    std::sort(mutexList_.begin(), mutexList_.end());
   }
 
   void
   detachCondition(std::condition_variable * conditionVariable)
   {
     std::lock_guard<std::mutex> lock(internalMutex_);
-    std::map<std::condition_variable *, std::mutex *>::iterator it =
-      std::find_if(conditionVariableList_.begin(), conditionVariableList_.end(),
-      [=](std::pair<std::condition_variable *, std::mutex *> in)
-        {
-          return conditionVariable == in.first;
-        }
-      );
-    if (it != conditionVariableList_.end())
-    {
-      mutexList_.erase(std::find(mutexList_.begin(), mutexList_.end(),it->second));
-      conditionVariableList_.erase(it);  
-    }
+    conditionVariableList_.erase(conditionVariableList_.find(conditionVariable)); 
   }
 
   bool
@@ -98,7 +85,6 @@ private:
   std::atomic_bool hasTriggered_;
   std::map<std::condition_variable *, std::mutex *> conditionVariableList_ RCPPUTILS_TSA_GUARDED_BY(
     internalMutex_);
-  std::vector<std::mutex *> mutexList_;
 
 };
 

@@ -70,7 +70,7 @@ public:
   : cv_list_(condition_variable_list)
   {
     if (!cv_list_.empty()) {
-      for (auto & c: cv_list_) {
+      for (auto && c: cv_list_) {
         c.second->lock();
       }
     }
@@ -79,7 +79,7 @@ public:
   ~ConditionalScopedLock()
   {
     if (!cv_list_.empty()) {
-      for (auto & c: cv_list_) {
+      for (auto && c: cv_list_) {
         c.second->unlock();
         c.first->notify_all();
       }

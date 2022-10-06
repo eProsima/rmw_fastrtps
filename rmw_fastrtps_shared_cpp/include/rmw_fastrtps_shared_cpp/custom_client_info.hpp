@@ -109,8 +109,8 @@ public:
 
           if (!conditionVariableList_.empty()) {
             std::vector<std::unique_lock<std::mutex>> vlock;
-            for (auto && m: mutexList_) {
-              vlock.emplace_back(*m);
+            for (auto && c: conditionVariableList_) {
+              vlock.emplace_back(*c.second);
             }
             list.emplace_back(std::move(response));
             // the change to list_has_data_ needs to be mutually exclusive with
@@ -137,8 +137,8 @@ public:
 
     if (!conditionVariableList_.empty()) {
       std::vector<std::unique_lock<std::mutex>> vlock;
-      for (auto && m: mutexList_) {
-        vlock.emplace_back(*m);
+      for (auto && c: conditionVariableList_) {
+        vlock.emplace_back(*c.second);
       }
       return popResponse(response);
     }
@@ -150,26 +150,13 @@ public:
   {
     std::lock_guard<std::mutex> lock(internalMutex_);
     conditionVariableList_.insert(std::make_pair(conditionVariable, conditionMutex));
-    mutexList_.emplace_back(conditionMutex);
-    std::sort(mutexList_.begin(), mutexList_.end());
   }
 
   void
   detachCondition(std::condition_variable * conditionVariable)
   {
     std::lock_guard<std::mutex> lock(internalMutex_);
-    std::map<std::condition_variable *, std::mutex *>::iterator it =
-      std::find_if(conditionVariableList_.begin(), conditionVariableList_.end(),
-      [=](std::pair<std::condition_variable *, std::mutex *> in)
-        {
-          return conditionVariable == in.first;
-        }
-      );
-    if (it != conditionVariableList_.end())
-    {
-      mutexList_.erase(std::find(mutexList_.begin(), mutexList_.end(),it->second));
-      conditionVariableList_.erase(it);  
-    }
+    conditionVariableList_.erase(conditionVariableList_.find(conditionVariable)); 
   }
 
   bool
@@ -213,7 +200,6 @@ private:
   std::atomic_bool list_has_data_;
   std::map<std::condition_variable *, std::mutex *> conditionVariableList_ RCPPUTILS_TSA_GUARDED_BY(
     internalMutex_);
-  std::vector<std::mutex *> mutexList_;
 
   std::set<eprosima::fastrtps::rtps::GUID_t> publishers_;
 };
