@@ -18,9 +18,10 @@
 #include <atomic>
 #include <condition_variable>
 #include <list>
+#include <map>
 #include <mutex>
-#include <unordered_set>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "fastcdr/FastBuffer.h"
 
@@ -182,7 +183,7 @@ class ServiceListener : public eprosima::fastdds::dds::DataReaderListener
 public:
   explicit ServiceListener(CustomServiceInfo * info)
   : info_(info), list_has_data_(false),
-    conditionMutex_(nullptr), conditionVariable_(nullptr)
+    conditionVariableList_()
   {
   }
 
@@ -209,7 +210,7 @@ public:
     data.is_cdr_buffer = true;
     data.data = request.buffer_;
     data.impl = nullptr;    // not used when is_cdr_buffer is true
-    if (reader->take_next_sample(&data, &request.sample_info_) == ReturnCode_t::RETCODE_OK) {
+    while (reader->take_next_sample(&data, &request.sample_info_) == ReturnCode_t::RETCODE_OK) {
       if (request.sample_info_.valid_data) {
         request.sample_identity_ = request.sample_info_.sample_identity;
         // Use response subscriber guid (on related_sample_identity) when present.
@@ -226,15 +227,20 @@ public:
 
         std::lock_guard<std::mutex> lock(internalMutex_);
 
-        if (conditionMutex_ != nullptr) {
-          std::unique_lock<std::mutex> clock(*conditionMutex_);
+        if (!conditionVariableList_.empty()) {
+          std::vector<std::unique_lock<std::mutex>> vlock;
+          for (auto && c: conditionVariableList_) {
+            vlock.emplace_back(*c.second);
+          }
           list.push_back(request);
           // the change to list_has_data_ needs to be mutually exclusive with
           // rmw_wait() which checks hasData() and decides if wait() needs to
           // be called
           list_has_data_.store(true);
-          clock.unlock();
-          conditionVariable_->notify_one();
+          vlock.clear();
+          for (auto && c: conditionVariableList_) {
+            c.first->notify_all();
+          }
         } else {
           list.push_back(request);
           list_has_data_.store(true);
@@ -249,8 +255,11 @@ public:
     std::lock_guard<std::mutex> lock(internalMutex_);
     CustomServiceRequest request;
 
-    if (conditionMutex_ != nullptr) {
-      std::unique_lock<std::mutex> clock(*conditionMutex_);
+    if (!conditionVariableList_.empty()) {
+      std::vector<std::unique_lock<std::mutex>> vlock;
+      for (auto && c: conditionVariableList_) {
+        vlock.emplace_back(*c.second);
+      }
       if (!list.empty()) {
         request = list.front();
         list.pop_front();
@@ -271,16 +280,14 @@ public:
   attachCondition(std::mutex * conditionMutex, std::condition_variable * conditionVariable)
   {
     std::lock_guard<std::mutex> lock(internalMutex_);
-    conditionMutex_ = conditionMutex;
-    conditionVariable_ = conditionVariable;
+    conditionVariableList_.insert(std::make_pair(conditionVariable, conditionMutex));
   }
 
   void
-  detachCondition()
+  detachCondition(std::condition_variable * conditionVariable)
   {
     std::lock_guard<std::mutex> lock(internalMutex_);
-    conditionMutex_ = nullptr;
-    conditionVariable_ = nullptr;
+    conditionVariableList_.erase(conditionVariableList_.find(conditionVariable)); 
   }
 
   bool
@@ -294,8 +301,8 @@ private:
   std::mutex internalMutex_;
   std::list<CustomServiceRequest> list RCPPUTILS_TSA_GUARDED_BY(internalMutex_);
   std::atomic_bool list_has_data_;
-  std::mutex * conditionMutex_ RCPPUTILS_TSA_GUARDED_BY(internalMutex_);
-  std::condition_variable * conditionVariable_ RCPPUTILS_TSA_GUARDED_BY(internalMutex_);
+  std::map<std::condition_variable *, std::mutex *> conditionVariableList_ RCPPUTILS_TSA_GUARDED_BY(
+    internalMutex_);
 };
 
 #endif  // RMW_FASTRTPS_SHARED_CPP__CUSTOM_SERVICE_INFO_HPP_

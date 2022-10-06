@@ -15,12 +15,15 @@
 #ifndef TYPES__GUARD_CONDITION_HPP_
 #define TYPES__GUARD_CONDITION_HPP_
 
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <cassert>
 #include <condition_variable>
 #include <mutex>
+#include <map>
 #include <utility>
+#include <vector>
 
 #include "rcpputils/thread_safety_annotations.hpp"
 
@@ -29,21 +32,23 @@ class GuardCondition
 public:
   GuardCondition()
   : hasTriggered_(false),
-    conditionMutex_(nullptr), conditionVariable_(nullptr) {}
+    conditionVariableList_() {}
 
   void
   trigger()
   {
     std::lock_guard<std::mutex> lock(internalMutex_);
 
-    if (conditionMutex_ != nullptr) {
-      std::unique_lock<std::mutex> clock(*conditionMutex_);
-      // the change to hasTriggered_ needs to be mutually exclusive with
-      // rmw_wait() which checks hasTriggered() and decides if wait() needs to
-      // be called
-      hasTriggered_ = true;
-      clock.unlock();
-      conditionVariable_->notify_one();
+    if (!conditionVariableList_.empty()) {
+      for (auto && c: conditionVariableList_) {
+        std::unique_lock<std::mutex> clock(*c.second);
+        // the change to hasTriggered_ needs to be mutually exclusive with
+        // rmw_wait() which checks hasTriggered() and decides if wait() needs to
+        // be called
+        hasTriggered_ = true;
+        clock.unlock();
+        c.first->notify_all();
+      }
     } else {
       hasTriggered_ = true;
     }
@@ -53,16 +58,14 @@ public:
   attachCondition(std::mutex * conditionMutex, std::condition_variable * conditionVariable)
   {
     std::lock_guard<std::mutex> lock(internalMutex_);
-    conditionMutex_ = conditionMutex;
-    conditionVariable_ = conditionVariable;
+    conditionVariableList_.insert(std::make_pair(conditionVariable, conditionMutex));
   }
 
   void
-  detachCondition()
+  detachCondition(std::condition_variable * conditionVariable)
   {
     std::lock_guard<std::mutex> lock(internalMutex_);
-    conditionMutex_ = nullptr;
-    conditionVariable_ = nullptr;
+    conditionVariableList_.erase(conditionVariableList_.find(conditionVariable)); 
   }
 
   bool
@@ -80,8 +83,9 @@ public:
 private:
   std::mutex internalMutex_;
   std::atomic_bool hasTriggered_;
-  std::mutex * conditionMutex_ RCPPUTILS_TSA_GUARDED_BY(internalMutex_);
-  std::condition_variable * conditionVariable_ RCPPUTILS_TSA_GUARDED_BY(internalMutex_);
+  std::map<std::condition_variable *, std::mutex *> conditionVariableList_ RCPPUTILS_TSA_GUARDED_BY(
+    internalMutex_);
+
 };
 
 #endif  // TYPES__GUARD_CONDITION_HPP_

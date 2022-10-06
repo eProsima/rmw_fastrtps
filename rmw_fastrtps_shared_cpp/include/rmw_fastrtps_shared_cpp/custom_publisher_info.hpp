@@ -17,6 +17,7 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <map>
 #include <mutex>
 #include <set>
 
@@ -61,8 +62,7 @@ public:
   explicit PubListener(CustomPublisherInfo * info)
   : deadline_changes_(false),
     liveliness_changes_(false),
-    conditionMutex_(nullptr),
-    conditionVariable_(nullptr)
+    conditionVariableList_()
   {
     (void) info;
   }
@@ -115,16 +115,14 @@ public:
   attachCondition(std::mutex * conditionMutex, std::condition_variable * conditionVariable)
   {
     std::lock_guard<std::mutex> lock(internalMutex_);
-    conditionMutex_ = conditionMutex;
-    conditionVariable_ = conditionVariable;
+    conditionVariableList_.insert(std::make_pair(conditionVariable, conditionMutex));
   }
 
   void
-  detachCondition()
+  detachCondition(std::condition_variable * conditionVariable)
   {
     std::lock_guard<std::mutex> lock(internalMutex_);
-    conditionMutex_ = nullptr;
-    conditionVariable_ = nullptr;
+    conditionVariableList_.erase(conditionVariableList_.find(conditionVariable)); 
   }
 
 private:
@@ -141,8 +139,8 @@ private:
   eprosima::fastdds::dds::LivelinessLostStatus liveliness_lost_status_
     RCPPUTILS_TSA_GUARDED_BY(internalMutex_);
 
-  std::mutex * conditionMutex_ RCPPUTILS_TSA_GUARDED_BY(internalMutex_);
-  std::condition_variable * conditionVariable_ RCPPUTILS_TSA_GUARDED_BY(internalMutex_);
+  std::map<std::condition_variable *, std::mutex *> conditionVariableList_ RCPPUTILS_TSA_GUARDED_BY(
+    internalMutex_);
 };
 
 #endif  // RMW_FASTRTPS_SHARED_CPP__CUSTOM_PUBLISHER_INFO_HPP_

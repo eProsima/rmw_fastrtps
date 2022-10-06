@@ -32,7 +32,7 @@ PubListener::on_offered_deadline_missed(
 
   // the change to liveliness_lost_count_ needs to be mutually exclusive with
   // rmw_wait() which checks hasEvent() and decides if wait() needs to be called
-  ConditionalScopedLock clock(conditionMutex_, conditionVariable_);
+  ConditionalScopedLock clock(conditionVariableList_);
 
   // Assign absolute values
   offered_deadline_missed_status_.total_count = status.total_count;
@@ -50,7 +50,7 @@ void PubListener::on_liveliness_lost(
 
   // the change to liveliness_lost_count_ needs to be mutually exclusive with
   // rmw_wait() which checks hasEvent() and decides if wait() needs to be called
-  ConditionalScopedLock clock(conditionMutex_, conditionVariable_);
+  ConditionalScopedLock clock(conditionVariableList_);
 
   // Assign absolute values
   liveliness_lost_status_.total_count = status.total_count;
