@@ -135,8 +135,8 @@ ament_export_dependencies(rosidl_typesupport_fastrtps_cpp)
 ament_export_dependencies(tracetools)
 
 register_rmw_implementation(
-  "c:rosidl_typesupport_c:rosidl_typesupport_fastrtps_c:rosidl_typesupport_introspection_c"
-  "cpp:rosidl_typesupport_cpp:rosidl_typesupport_fastrtps_cpp:rosidl_typesupport_introspection_cpp")
+  "c:rosidl_typesupport_c:rosidl_typesupport_fastrtps_c"
+  "cpp:rosidl_typesupport_cpp:rosidl_typesupport_fastrtps_cpp")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
