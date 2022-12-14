@@ -28,8 +28,8 @@
 
 #include "rmw/error_handling.h"
 
-#include "rosidl_typesupport_fastrtps_c/wstring_conversion.hpp"
-#include "rosidl_typesupport_fastrtps_cpp/wstring_conversion.hpp"
+//#include "rosidl_typesupport_fastrtps_c/wstring_conversion.hpp"
+//#include "rosidl_typesupport_fastrtps_cpp/wstring_conversion.hpp"
 #include "rosidl_typesupport_introspection_cpp/field_types.hpp"
 #include "rosidl_typesupport_introspection_cpp/message_introspection.hpp"
 #include "rosidl_typesupport_introspection_cpp/service_introspection.hpp"
@@ -96,7 +96,7 @@ void serialize_field<std::wstring>(
   std::wstring wstr;
   if (!member->is_array_) {
     auto u16str = static_cast<std::u16string *>(field);
-    rosidl_typesupport_fastrtps_cpp::u16string_to_wstring(*u16str, wstr);
+//    rosidl_typesupport_fastrtps_cpp::u16string_to_wstring(*u16str, wstr);
     ser << wstr;
   } else {
     size_t size;
@@ -109,7 +109,7 @@ void serialize_field<std::wstring>(
     for (size_t i = 0; i < size; ++i) {
       const void * element = member->get_const_function(field, i);
       auto u16str = static_cast<const std::u16string *>(element);
-      rosidl_typesupport_fastrtps_cpp::u16string_to_wstring(*u16str, wstr);
+//      rosidl_typesupport_fastrtps_cpp::u16string_to_wstring(*u16str, wstr);
       ser << wstr;
     }
   }
@@ -182,19 +182,19 @@ void serialize_field<std::wstring>(
   std::wstring wstr;
   if (!member->is_array_) {
     auto u16str = static_cast<rosidl_runtime_c__U16String *>(field);
-    rosidl_typesupport_fastrtps_c::u16string_to_wstring(*u16str, wstr);
+//    rosidl_typesupport_fastrtps_c::u16string_to_wstring(*u16str, wstr);
     ser << wstr;
   } else if (member->array_size_ && !member->is_upper_bound_) {
     auto array = static_cast<rosidl_runtime_c__U16String *>(field);
     for (size_t i = 0; i < member->array_size_; ++i) {
-      rosidl_typesupport_fastrtps_c::u16string_to_wstring(array[i], wstr);
+//      rosidl_typesupport_fastrtps_c::u16string_to_wstring(array[i], wstr);
       ser << wstr;
     }
   } else {
     auto sequence = static_cast<rosidl_runtime_c__U16String__Sequence *>(field);
     ser << static_cast<uint32_t>(sequence->size);
     for (size_t i = 0; i < sequence->size; ++i) {
-      rosidl_typesupport_fastrtps_c::u16string_to_wstring(sequence->data[i], wstr);
+//      rosidl_typesupport_fastrtps_c::u16string_to_wstring(sequence->data[i], wstr);
       ser << wstr;
     }
   }
@@ -601,8 +601,8 @@ inline void deserialize_field<std::wstring>(
   std::wstring wstr;
   if (!member->is_array_) {
     deser >> wstr;
-    rosidl_typesupport_fastrtps_cpp::wstring_to_u16string(
-      wstr, *static_cast<std::u16string *>(field));
+//    rosidl_typesupport_fastrtps_cpp::wstring_to_u16string(
+//      wstr, *static_cast<std::u16string *>(field));
   } else {
     uint32_t size;
     if (member->array_size_ && !member->is_upper_bound_) {
@@ -615,7 +615,7 @@ inline void deserialize_field<std::wstring>(
       void * element = member->get_function(field, i);
       auto u16str = static_cast<std::u16string *>(element);
       deser >> wstr;
-      rosidl_typesupport_fastrtps_cpp::wstring_to_u16string(wstr, *u16str);
+//      rosidl_typesupport_fastrtps_cpp::wstring_to_u16string(wstr, *u16str);
     }
   }
 }
@@ -694,13 +694,13 @@ inline void deserialize_field<std::wstring>(
   std::wstring wstr;
   if (!member->is_array_) {
     deser >> wstr;
-    rosidl_typesupport_fastrtps_c::wstring_to_u16string(
-      wstr, *static_cast<rosidl_runtime_c__U16String *>(field));
+//    rosidl_typesupport_fastrtps_c::wstring_to_u16string(
+//      wstr, *static_cast<rosidl_runtime_c__U16String *>(field));
   } else if (member->array_size_ && !member->is_upper_bound_) {
     auto array = static_cast<rosidl_runtime_c__U16String *>(field);
     for (size_t i = 0; i < member->array_size_; ++i) {
       deser >> wstr;
-      rosidl_typesupport_fastrtps_c::wstring_to_u16string(wstr, array[i]);
+//      rosidl_typesupport_fastrtps_c::wstring_to_u16string(wstr, array[i]);
     }
   } else {
     uint32_t size;
@@ -711,7 +711,7 @@ inline void deserialize_field<std::wstring>(
     }
     for (size_t i = 0; i < sequence->size; ++i) {
       deser >> wstr;
-      rosidl_typesupport_fastrtps_c::wstring_to_u16string(wstr, sequence->data[i]);
+//      rosidl_typesupport_fastrtps_c::wstring_to_u16string(wstr, sequence->data[i]);
     }
   }
 }

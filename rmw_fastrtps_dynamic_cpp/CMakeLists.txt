@@ -43,8 +43,6 @@ find_package(FastRTPS 2.3 REQUIRED MODULE)
 
 find_package(rmw REQUIRED)
 find_package(rosidl_runtime_c REQUIRED)
-find_package(rosidl_typesupport_fastrtps_c REQUIRED)
-find_package(rosidl_typesupport_fastrtps_cpp REQUIRED)
 find_package(rosidl_typesupport_introspection_c REQUIRED)
 find_package(rosidl_typesupport_introspection_cpp REQUIRED)
 
@@ -104,8 +102,6 @@ target_link_libraries(rmw_fastrtps_dynamic_cpp
 ament_target_dependencies(rmw_fastrtps_dynamic_cpp
   "rcpputils"
   "rcutils"
-  "rosidl_typesupport_fastrtps_c"
-  "rosidl_typesupport_fastrtps_cpp"
   "rosidl_typesupport_introspection_c"
   "rosidl_typesupport_introspection_cpp"
   "rmw_dds_common"
@@ -136,8 +132,6 @@ ament_export_dependencies(rmw)
 ament_export_dependencies(rmw_dds_common)
 ament_export_dependencies(rmw_fastrtps_shared_cpp)
 ament_export_dependencies(rosidl_runtime_c)
-ament_export_dependencies(rosidl_typesupport_fastrtps_c)
-ament_export_dependencies(rosidl_typesupport_fastrtps_cpp)
 ament_export_dependencies(rosidl_typesupport_introspection_c)
 ament_export_dependencies(rosidl_typesupport_introspection_cpp)
 
