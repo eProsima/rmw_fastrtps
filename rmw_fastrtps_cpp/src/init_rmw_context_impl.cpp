@@ -38,6 +38,8 @@
 
 #include "rmw_fastrtps_shared_cpp/listener_thread.hpp"
 
+#include "memory_monitor.hpp"
+
 using rmw_dds_common::msg::ParticipantEntitiesInfo;
 
 static
@@ -56,6 +58,8 @@ init_context_impl(
   if (!common_context) {
     return RMW_RET_BAD_ALLOC;
   }
+
+  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("init_context_impl: common_context created");
 
   std::unique_ptr<CustomParticipantInfo, std::function<void(CustomParticipantInfo *)>>
   participant_info(
@@ -77,6 +81,8 @@ init_context_impl(
   if (!participant_info) {
     return RMW_RET_BAD_ALLOC;
   }
+
+  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("init_context_impl: participant_info created");
 
   rmw_qos_profile_t qos = rmw_qos_profile_default;
 
@@ -112,6 +118,8 @@ init_context_impl(
     return RMW_RET_BAD_ALLOC;
   }
 
+  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("init_context_impl: ros_discovery_info publisher created");
+
   // If we would have support for keyed topics, this could be KEEP_LAST and depth 1.
   qos.history = RMW_QOS_POLICY_HISTORY_KEEP_ALL;
   std::unique_ptr<rmw_subscription_t, std::function<void(rmw_subscription_t *)>>
@@ -139,6 +147,8 @@ init_context_impl(
     return RMW_RET_BAD_ALLOC;
   }
 
+  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("init_context_impl: ros_discovery_info subscription created");
+
   std::unique_ptr<rmw_guard_condition_t, std::function<void(rmw_guard_condition_t *)>>
   graph_guard_condition(
     rmw_fastrtps_shared_cpp::__rmw_create_guard_condition(eprosima_fastrtps_identifier),
@@ -155,6 +165,8 @@ init_context_impl(
     return RMW_RET_BAD_ALLOC;
   }
 
+  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("init_context_impl: graph_guard_condition created");
+
   common_context->gid = rmw_fastrtps_shared_cpp::create_rmw_gid(
     eprosima_fastrtps_identifier, participant_info->participant_->guid());
   common_context->pub = publisher.get();
@@ -169,6 +181,8 @@ init_context_impl(
     return ret;
   }
 
+  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("init_context_impl: graph listener thread created");
+
   common_context->graph_cache.set_on_change_callback(
     [guard_condition = graph_guard_condition.get()]()
     {
@@ -180,6 +194,8 @@ init_context_impl(
   common_context->graph_cache.add_participant(
     common_context->gid,
     context->options.enclave);
+
+  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("init_context_impl: graph_cache.add_participant called");
 
   graph_guard_condition.release();
   publisher.release();
