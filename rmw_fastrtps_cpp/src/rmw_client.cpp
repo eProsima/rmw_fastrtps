@@ -60,6 +60,9 @@ rmw_create_client(
   const char * service_name,
   const rmw_qos_profile_t * qos_policies)
 {
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: start");
+  rmw_fastrtps_shared_cpp::log_memory_delta(service_name);
+
   /////
   // Check input parameters
   RMW_CHECK_ARGUMENT_FOR_NULL(node, nullptr);
@@ -88,12 +91,16 @@ rmw_create_client(
     }
   }
 
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: after input validation");
+
   /////
   // Check RMW QoS
   if (!is_valid_qos(*qos_policies)) {
     RMW_SET_ERROR_MSG("create_client() called with invalid QoS");
     return nullptr;
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: after QoS validation");
 
   /////
   // Get Participant and SubEntities
@@ -126,6 +133,8 @@ rmw_create_client(
       return nullptr;
     }
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: after getting type support");
 
   std::lock_guard<std::mutex> lck(participant_info->entity_creation_mutex_);
 
@@ -179,6 +188,8 @@ rmw_create_client(
     return nullptr;
   }
 
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: before custom info");
+
   /////
   // Create the custom Client struct (info)
   CustomClientInfo * info = new (std::nothrow) CustomClientInfo();
@@ -186,6 +197,8 @@ rmw_create_client(
     RMW_SET_ERROR_MSG("create_client() failed to allocate custom info");
     return nullptr;
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: CustomClientInfo created");
 
   auto cleanup_info = rcpputils::make_scope_exit(
     [info, dds_participant]() {
@@ -218,6 +231,9 @@ rmw_create_client(
 
     request_fastdds_type.reset(tsupport);
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: RequestTypeSupport_cpp created");
+
   if (!response_fastdds_type) {
     auto tsupport = new (std::nothrow) ResponseTypeSupport_cpp(service_members);
     if (!tsupport) {
@@ -227,6 +243,8 @@ rmw_create_client(
 
     response_fastdds_type.reset(tsupport);
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: ResponseTypeSupport_cpp created");
 
   if (ReturnCode_t::RETCODE_OK != request_fastdds_type.register_type(dds_participant)) {
     RMW_SET_ERROR_MSG("create_client() failed to register request type");
@@ -240,6 +258,8 @@ rmw_create_client(
   }
   info->response_type_support_ = response_fastdds_type;
 
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: types registered");
+
   /////
   // Create Listeners
   info->listener_ = new (std::nothrow) ClientListener(info);
@@ -248,11 +268,15 @@ rmw_create_client(
     return nullptr;
   }
 
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: ClientListener created");
+
   info->pub_listener_ = new (std::nothrow) ClientPubListener(info);
   if (!info->pub_listener_) {
     RMW_SET_ERROR_MSG("create_client() failed to create request publisher listener");
     return nullptr;
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: ClientPubListener created");
 
   /////
   // Create and register Topics
@@ -275,6 +299,8 @@ rmw_create_client(
 
   response_topic_desc = response_topic.desc;
 
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: response topic obtained");
+
   // Create request topic
   rmw_fastrtps_shared_cpp::TopicHolder request_topic;
   if (!rmw_fastrtps_shared_cpp::cast_or_create_topic(
@@ -287,6 +313,8 @@ rmw_create_client(
 
   info->request_topic_ = request_topic_name;
   info->response_topic_ = response_topic_name;
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: request topic obtained");
 
   // Keyword to find DataWriter and DataReader QoS
   const std::string topic_name_fallback = "client";
@@ -320,6 +348,8 @@ rmw_create_client(
     return nullptr;
   }
 
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: response datareader QoS prepared");
+
   // Creates DataReader
   info->response_reader_ = subscriber->create_datareader(
     response_topic_desc,
@@ -331,6 +361,8 @@ rmw_create_client(
     RMW_SET_ERROR_MSG("create_client() failed to create response DataReader");
     return nullptr;
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: response datareader created");
 
   info->response_reader_->get_statuscondition().set_enabled_statuses(
     eprosima::fastdds::dds::StatusMask::data_available());
@@ -374,6 +406,8 @@ rmw_create_client(
     return nullptr;
   }
 
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: request datawriter QoS prepared");
+
   // Creates DataWriter with a mask enabling publication_matched calls for the listener
   info->request_writer_ = publisher->create_datawriter(
     request_topic.topic,
@@ -385,6 +419,8 @@ rmw_create_client(
     RMW_SET_ERROR_MSG("create_client() failed to create request DataWriter");
     return nullptr;
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: request datawriter created");
 
   // Set the StatusCondition to none to prevent triggering via WaitSets
   info->request_writer_->get_statuscondition().set_enabled_statuses(
@@ -435,6 +471,8 @@ rmw_create_client(
   }
   memcpy(const_cast<char *>(rmw_client->service_name), service_name, strlen(service_name) + 1);
 
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: rmw_client created");
+
   {
     // Update graph
     std::lock_guard<std::mutex> guard(common_context->node_update_mutex);
@@ -473,6 +511,8 @@ rmw_create_client(
       return nullptr;
     }
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: graph updated");
 
   request_topic.should_be_deleted = false;
   response_topic.should_be_deleted = false;
