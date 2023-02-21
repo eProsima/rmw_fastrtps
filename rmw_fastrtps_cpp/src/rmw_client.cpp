@@ -60,8 +60,8 @@ rmw_create_client(
   const char * service_name,
   const rmw_qos_profile_t * qos_policies)
 {
-  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: start");
-  rmw_fastrtps_shared_cpp::log_memory_delta(service_name);
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_client: start", true);
+  rmw_fastrtps_shared_cpp::log_memory_delta(service_name, true);
 
   /////
   // Check input parameters

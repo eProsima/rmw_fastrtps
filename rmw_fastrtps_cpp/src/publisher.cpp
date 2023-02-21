@@ -63,8 +63,8 @@ rmw_fastrtps_cpp::create_publisher(
   bool keyed,
   bool create_publisher_listener)
 {
-  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_publisher: start");
-  rmw_fastrtps_shared_cpp::log_memory_delta(topic_name);
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_publisher: start", true);
+  rmw_fastrtps_shared_cpp::log_memory_delta(topic_name, true);
 
   /////
   // Check input parameters

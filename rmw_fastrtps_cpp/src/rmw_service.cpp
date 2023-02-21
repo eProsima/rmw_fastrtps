@@ -65,8 +65,8 @@ rmw_create_service(
   const rosidl_service_type_support_t * type_supports,
   const char * service_name, const rmw_qos_profile_t * qos_policies)
 {
-  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: start");
-  rmw_fastrtps_shared_cpp::log_memory_delta(service_name);
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: start", true);
+  rmw_fastrtps_shared_cpp::log_memory_delta(service_name, true);
 
   /////
   // Check input parameters

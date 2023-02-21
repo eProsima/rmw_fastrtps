@@ -68,8 +68,8 @@ create_subscription(
   const rmw_subscription_options_t * subscription_options,
   bool keyed)
 {
-  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_subscription: start");
-  rmw_fastrtps_shared_cpp::log_memory_delta(topic_name);
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_subscription: start", true);
+  rmw_fastrtps_shared_cpp::log_memory_delta(topic_name, true);
 
   /////
   // Check input parameters
