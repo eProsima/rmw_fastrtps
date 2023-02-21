@@ -29,7 +29,7 @@
 #include "rmw_fastrtps_cpp/identifier.hpp"
 #include "rmw_fastrtps_cpp/subscription.hpp"
 
-#include "memory_monitor.hpp"
+#include "rmw_fastrtps_shared_cpp/utils.hpp"
 
 extern "C"
 {
@@ -71,8 +71,8 @@ rmw_create_subscription(
     eprosima_fastrtps_identifier,
     return nullptr);
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_create_subscription: start");
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta(topic_name);
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_subscription: start");
+  rmw_fastrtps_shared_cpp::log_memory_delta(topic_name);
 
   auto participant_info =
     static_cast<CustomParticipantInfo *>(node->context->impl->participant_info);
@@ -88,7 +88,7 @@ rmw_create_subscription(
     return nullptr;
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_create_subscription: rmw_fastrtps_cpp::create_subscription called");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_subscription: rmw_fastrtps_cpp::create_subscription called");
 
   auto common_context = static_cast<rmw_dds_common::Context *>(node->context->impl->common);
   auto info = static_cast<CustomSubscriberInfo *>(subscription->data);
@@ -123,7 +123,7 @@ rmw_create_subscription(
   info->node_ = node;
   info->common_context_ = common_context;
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_create_subscription: graph updated");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_subscription: graph updated");
 
   return subscription;
 }

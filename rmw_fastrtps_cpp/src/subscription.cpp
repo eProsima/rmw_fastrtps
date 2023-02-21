@@ -52,7 +52,7 @@
 #include "tracetools/tracetools.h"
 
 #include "type_support_common.hpp"
-#include "memory_monitor.hpp"
+#include "rmw_fastrtps_shared_cpp/utils.hpp"
 
 using PropertyPolicyHelper = eprosima::fastrtps::rtps::PropertyPolicyHelper;
 
@@ -68,8 +68,8 @@ create_subscription(
   const rmw_subscription_options_t * subscription_options,
   bool keyed)
 {
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_subscription: start");
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta(topic_name);
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_subscription: start");
+  rmw_fastrtps_shared_cpp::log_memory_delta(topic_name);
 
   /////
   // Check input parameters
@@ -98,7 +98,7 @@ create_subscription(
   }
   RMW_CHECK_ARGUMENT_FOR_NULL(subscription_options, nullptr);
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_subscription: after input validation");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_subscription: after input validation");
 
   /////
   // Check RMW QoS
@@ -107,7 +107,7 @@ create_subscription(
     return nullptr;
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_subscription: after QoS validation");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_subscription: after QoS validation");
 
   /////
   // Get RMW Type Support
@@ -131,7 +131,7 @@ create_subscription(
     }
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_subscription: after getting type support");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_subscription: after getting type support");
 
   std::lock_guard<std::mutex> lck(participant_info->entity_creation_mutex_);
 
@@ -164,7 +164,7 @@ create_subscription(
   eprosima::fastdds::dds::DomainParticipant * dds_participant = participant_info->participant_;
   eprosima::fastdds::dds::Subscriber * subscriber = participant_info->subscriber_;
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_subscription: before custom info");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_subscription: before custom info");
 
   /////
   // Create the custom Subscriber struct (info)
@@ -174,7 +174,7 @@ create_subscription(
     return nullptr;
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_subscription: CustomSubscriberInfo created");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_subscription: CustomSubscriberInfo created");
 
   auto cleanup_info = rcpputils::make_scope_exit(
     [info, dds_participant]()
@@ -202,7 +202,7 @@ create_subscription(
     fastdds_type.reset(tsupport);
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_subscription: MessageTypeSupport_cpp created");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_subscription: MessageTypeSupport_cpp created");
 
   if (keyed && !fastdds_type->m_isGetKeyDefined) {
     RMW_SET_ERROR_MSG("create_subscription() requested a keyed topic with a non-keyed type");
@@ -215,7 +215,7 @@ create_subscription(
   }
   info->type_support_ = fastdds_type;
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_subscription: type registered");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_subscription: type registered");
 
   if (!rmw_fastrtps_shared_cpp::register_type_object(type_supports, type_name)) {
     RMW_SET_ERROR_MSG_WITH_FORMAT_STRING(
@@ -232,7 +232,7 @@ create_subscription(
     return nullptr;
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_subscription: SubListener created");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_subscription: SubListener created");
 
   /////
   // Create and register Topic
@@ -251,7 +251,7 @@ create_subscription(
     return nullptr;
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_subscription: cast_or_create_topic called");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_subscription: cast_or_create_topic called");
 
   info->dds_participant_ = dds_participant;
   info->subscriber_ = subscriber;
@@ -276,7 +276,7 @@ create_subscription(
       des_topic = filtered_topic;
     }
 
-    rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_subscription: create_content_filtered_topic called");
+    rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_subscription: create_content_filtered_topic called");
   }
 
   /////
@@ -306,7 +306,7 @@ create_subscription(
 
   info->datareader_qos_ = reader_qos;
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_subscription: datareader QoS prepared");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_subscription: datareader QoS prepared");
 
   // create_datareader
   if (!rmw_fastrtps_shared_cpp::create_datareader(
@@ -321,7 +321,7 @@ create_subscription(
     return nullptr;
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_subscription: datareader created");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_subscription: datareader created");
 
   // Initialize DataReader's StatusCondition to be notified when new data is available
   info->data_reader_->get_statuscondition().set_enabled_statuses(
@@ -366,7 +366,7 @@ create_subscription(
   rmw_fastrtps_shared_cpp::__init_subscription_for_loans(rmw_subscription);
   rmw_subscription->is_cft_enabled = info->filtered_topic_ != nullptr;
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_subscription: rmw_subscription created");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_subscription: rmw_subscription created");
 
   topic.should_be_deleted = false;
   cleanup_rmw_subscription.cancel();

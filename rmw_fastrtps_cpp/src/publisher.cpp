@@ -50,7 +50,6 @@
 #include "tracetools/tracetools.h"
 
 #include "type_support_common.hpp"
-#include "memory_monitor.hpp"
 
 using DataSharingKind = eprosima::fastdds::dds::DataSharingKind;
 
@@ -64,8 +63,8 @@ rmw_fastrtps_cpp::create_publisher(
   bool keyed,
   bool create_publisher_listener)
 {
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_publisher: start");
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta(topic_name);
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_publisher: start");
+  rmw_fastrtps_shared_cpp::log_memory_delta(topic_name);
 
   /////
   // Check input parameters
@@ -101,7 +100,7 @@ rmw_fastrtps_cpp::create_publisher(
     return nullptr;
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_publisher: after input validation");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_publisher: after input validation");
 
   /////
   // Check RMW QoS
@@ -110,7 +109,7 @@ rmw_fastrtps_cpp::create_publisher(
     return nullptr;
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_publisher: after QoS validation");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_publisher: after QoS validation");
 
   /////
   // Get RMW Type Support
@@ -134,7 +133,7 @@ rmw_fastrtps_cpp::create_publisher(
     }
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_publisher: after getting type support");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_publisher: after getting type support");
 
   std::lock_guard<std::mutex> lck(participant_info->entity_creation_mutex_);
 
@@ -167,7 +166,7 @@ rmw_fastrtps_cpp::create_publisher(
   eprosima::fastdds::dds::DomainParticipant * dds_participant = participant_info->participant_;
   eprosima::fastdds::dds::Publisher * publisher = participant_info->publisher_;
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_publisher: before custom info");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_publisher: before custom info");
 
   /////
   // Create the custom Publisher struct (info)
@@ -177,7 +176,7 @@ rmw_fastrtps_cpp::create_publisher(
     return nullptr;
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_publisher: CustomPublisherInfo created");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_publisher: CustomPublisherInfo created");
 
   auto cleanup_info = rcpputils::make_scope_exit(
     [info, dds_participant]() {
@@ -204,7 +203,7 @@ rmw_fastrtps_cpp::create_publisher(
     fastdds_type.reset(tsupport);
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_publisher: MessageTypeSupport_cpp created");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_publisher: MessageTypeSupport_cpp created");
 
   if (keyed && !fastdds_type->m_isGetKeyDefined) {
     RMW_SET_ERROR_MSG("create_publisher() requested a keyed topic with a non-keyed type");
@@ -217,7 +216,7 @@ rmw_fastrtps_cpp::create_publisher(
   }
   info->type_support_ = fastdds_type;
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_publisher: type registered");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_publisher: type registered");
 
   if (!rmw_fastrtps_shared_cpp::register_type_object(type_supports, type_name)) {
     RMW_SET_ERROR_MSG_WITH_FORMAT_STRING(
@@ -226,7 +225,7 @@ rmw_fastrtps_cpp::create_publisher(
     return nullptr;
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_publisher: register_type_object called");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_publisher: register_type_object called");
 
   /////
   // Create Listener
@@ -239,7 +238,7 @@ rmw_fastrtps_cpp::create_publisher(
     }
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_publisher: PubListener created");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_publisher: PubListener created");
 
   /////
   // Create and register Topic
@@ -258,7 +257,7 @@ rmw_fastrtps_cpp::create_publisher(
     return nullptr;
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_publisher: cast_or_create_topic called");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_publisher: cast_or_create_topic called");
 
   /////
   // Create DataWriter
@@ -293,7 +292,7 @@ rmw_fastrtps_cpp::create_publisher(
     return nullptr;
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_publisher: datawriter QoS prepared");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_publisher: datawriter QoS prepared");
 
   // Creates DataWriter with a mask enabling publication_matched calls for the listener
   info->data_writer_ = publisher->create_datawriter(
@@ -307,7 +306,7 @@ rmw_fastrtps_cpp::create_publisher(
     return nullptr;
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_publisher: datawriter created");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_publisher: datawriter created");
 
   // Set the StatusCondition to none to prevent triggering via WaitSets
   info->data_writer_->get_statuscondition().set_enabled_statuses(
@@ -351,7 +350,7 @@ rmw_fastrtps_cpp::create_publisher(
 
   rmw_publisher->options = *publisher_options;
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_fastrtps_cpp::create_publisher: rmw_publisher created");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_fastrtps_cpp::create_publisher: rmw_publisher created");
 
   topic.should_be_deleted = false;
   cleanup_rmw_publisher.cancel();

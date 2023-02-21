@@ -184,6 +184,9 @@ create_datareader(
   SubListener * listener,
   eprosima::fastdds::dds::DataReader ** data_reader);
 
+RMW_FASTRTPS_SHARED_CPP_PUBLIC
+void log_memory_delta(const char* msg);
+
 }  // namespace rmw_fastrtps_shared_cpp
 
 #endif  // RMW_FASTRTPS_SHARED_CPP__UTILS_HPP_

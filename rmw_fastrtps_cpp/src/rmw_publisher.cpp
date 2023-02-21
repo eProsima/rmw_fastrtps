@@ -33,7 +33,7 @@
 #include "rmw_dds_common/context.hpp"
 #include "rmw_dds_common/msg/participant_entities_info.hpp"
 
-#include "memory_monitor.hpp"
+#include "rmw_fastrtps_shared_cpp/utils.hpp"
 
 extern "C"
 {
@@ -75,8 +75,8 @@ rmw_create_publisher(
     eprosima_fastrtps_identifier,
     return nullptr);
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_create_publisher: start");
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta(topic_name);
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_publisher: start");
+  rmw_fastrtps_shared_cpp::log_memory_delta(topic_name);
 
   auto participant_info =
     static_cast<CustomParticipantInfo *>(node->context->impl->participant_info);
@@ -94,7 +94,7 @@ rmw_create_publisher(
     return nullptr;
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_create_publisher: rmw_fastrtps_cpp::create_publisher called");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_publisher: rmw_fastrtps_cpp::create_publisher called");
 
   auto common_context = static_cast<rmw_dds_common::Context *>(node->context->impl->common);
 
@@ -127,7 +127,7 @@ rmw_create_publisher(
     }
   }
 
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_create_publisher: graph updated");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_publisher: graph updated");
 
   return publisher;
 }

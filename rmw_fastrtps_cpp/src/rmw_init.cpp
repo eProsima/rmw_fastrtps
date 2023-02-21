@@ -45,7 +45,7 @@
 #include "rmw_fastrtps_cpp/publisher.hpp"
 #include "rmw_fastrtps_cpp/subscription.hpp"
 
-#include "memory_monitor.hpp"
+#include "rmw_fastrtps_shared_cpp/utils.hpp"
 
 extern "C"
 {
@@ -75,7 +75,7 @@ using rmw_dds_common::msg::ParticipantEntitiesInfo;
 rmw_ret_t
 rmw_init(const rmw_init_options_t * options, rmw_context_t * context)
 {
-  rmw_fastrtps_cpp::MemoryMonitor::log_memory_delta("rmw_init startup");
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_init startup");
 
   RMW_CHECK_ARGUMENT_FOR_NULL(options, RMW_RET_INVALID_ARGUMENT);
   RMW_CHECK_ARGUMENT_FOR_NULL(context, RMW_RET_INVALID_ARGUMENT);
