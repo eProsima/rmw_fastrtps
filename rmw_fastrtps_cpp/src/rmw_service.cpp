@@ -65,6 +65,9 @@ rmw_create_service(
   const rosidl_service_type_support_t * type_supports,
   const char * service_name, const rmw_qos_profile_t * qos_policies)
 {
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: start");
+  rmw_fastrtps_shared_cpp::log_memory_delta(service_name);
+
   /////
   // Check input parameters
   RMW_CHECK_ARGUMENT_FOR_NULL(node, nullptr);
@@ -93,12 +96,16 @@ rmw_create_service(
     }
   }
 
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: after input validation");
+
   /////
   // Check RMW QoS
   if (!is_valid_qos(*qos_policies)) {
     RMW_SET_ERROR_MSG("create_service() called with invalid QoS");
     return nullptr;
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: after QoS validation");
 
   /////
   // Get Participant and SubEntities
@@ -131,6 +138,8 @@ rmw_create_service(
       return nullptr;
     }
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: after getting type support");
 
   std::lock_guard<std::mutex> lck(participant_info->entity_creation_mutex_);
 
@@ -184,6 +193,8 @@ rmw_create_service(
     return nullptr;
   }
 
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: before custom info");
+
   /////
   // Create the custom Service struct (info)
   CustomServiceInfo * info = new (std::nothrow) CustomServiceInfo();
@@ -191,6 +202,9 @@ rmw_create_service(
     RMW_SET_ERROR_MSG("create_service() failed to allocate custom info");
     return nullptr;
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: CustomServiceInfo created");
+
   auto cleanup_info = rcpputils::make_scope_exit(
     [info, dds_participant]() {
       delete info->pub_listener_;
@@ -220,6 +234,9 @@ rmw_create_service(
 
     request_fastdds_type.reset(tsupport);
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: RequestTypeSupport_cpp created");
+
   if (!response_fastdds_type) {
     auto tsupport = new (std::nothrow) ResponseTypeSupport_cpp(service_members);
     if (!tsupport) {
@@ -229,6 +246,8 @@ rmw_create_service(
 
     response_fastdds_type.reset(tsupport);
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: ResponseTypeSupport_cpp created");
 
   if (ReturnCode_t::RETCODE_OK != request_fastdds_type.register_type(dds_participant)) {
     RMW_SET_ERROR_MSG("create_service() failed to register request type");
@@ -242,6 +261,8 @@ rmw_create_service(
   }
   info->response_type_support_ = response_fastdds_type;
 
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: types registered");
+
   /////
   // Create Listeners
   info->listener_ = new (std::nothrow) ServiceListener(info);
@@ -250,11 +271,15 @@ rmw_create_service(
     return nullptr;
   }
 
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: ServiceListener created");
+
   info->pub_listener_ = new (std::nothrow) ServicePubListener(info);
   if (!info->pub_listener_) {
     RMW_SET_ERROR_MSG("create_service() failed to create response publisher listener");
     return nullptr;
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: ServicePubListener created");
 
   /////
   // Create and register Topics
@@ -277,6 +302,8 @@ rmw_create_service(
 
   request_topic_desc = request_topic.desc;
 
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: request topic obtained");
+
   // Create response topic
   rmw_fastrtps_shared_cpp::TopicHolder response_topic;
   if (!rmw_fastrtps_shared_cpp::cast_or_create_topic(
@@ -286,6 +313,8 @@ rmw_create_service(
     RMW_SET_ERROR_MSG("create_service() failed to create response topic");
     return nullptr;
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: response topic obtained");
 
   // Keyword to find DataWrtier and DataReader QoS
   const std::string topic_name_fallback = "service";
@@ -319,6 +348,8 @@ rmw_create_service(
     return nullptr;
   }
 
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: request datareader QoS prepared");
+
   // Creates DataReader
   info->request_reader_ = subscriber->create_datareader(
     request_topic_desc,
@@ -330,6 +361,8 @@ rmw_create_service(
     RMW_SET_ERROR_MSG("create_service() failed to create request DataReader");
     return nullptr;
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: request datareader created");
 
   info->request_reader_->get_statuscondition().set_enabled_statuses(
     eprosima::fastdds::dds::StatusMask::data_available());
@@ -377,6 +410,8 @@ rmw_create_service(
     return nullptr;
   }
 
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: response datawriter QoS prepared");
+
   // Creates DataWriter with a mask enabling publication_matched calls for the listener
   info->response_writer_ = publisher->create_datawriter(
     response_topic.topic,
@@ -388,6 +423,8 @@ rmw_create_service(
     RMW_SET_ERROR_MSG("create_service() failed to create response DataWriter");
     return nullptr;
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: response datawriter created");
 
   // Set the StatusCondition to none to prevent triggering via WaitSets
   info->response_writer_->get_statuscondition().set_enabled_statuses(
@@ -435,6 +472,8 @@ rmw_create_service(
   }
   memcpy(const_cast<char *>(rmw_service->service_name), service_name, strlen(service_name) + 1);
 
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: rmw_service created");
+
   {
     // Update graph
     std::lock_guard<std::mutex> guard(common_context->node_update_mutex);
@@ -472,6 +511,8 @@ rmw_create_service(
       return nullptr;
     }
   }
+
+  rmw_fastrtps_shared_cpp::log_memory_delta("rmw_create_service: graph updated");
 
   request_topic.should_be_deleted = false;
   response_topic.should_be_deleted = false;
