@@ -251,10 +251,12 @@ public:
         return usage.ru_maxrss;
     }
 
-    static void log_memory_delta(const char* msg)
+    static void log_memory_delta(const char* msg, bool force)
     {
         uint64_t delta = get_instance().get_memory_delta();
-        RCUTILS_LOG_INFO("%s --> %lu", msg, delta);
+        if (delta > 0 || force) {
+          RCUTILS_LOG_INFO("%s --> %lu", msg, delta);
+        }
     }
 
     static MemoryMonitor& get_instance()
@@ -267,10 +269,10 @@ private:
     uint64_t m_rss_kb{ 0 };
 };
 
-void log_memory_delta(const char* msg)
+void log_memory_delta(const char* msg, bool force)
 {
   static MemoryMonitor monitor;
-  monitor.log_memory_delta(msg);
+  monitor.log_memory_delta(msg, force);
 }
 
 }  // namespace rmw_fastrtps_shared_cpp

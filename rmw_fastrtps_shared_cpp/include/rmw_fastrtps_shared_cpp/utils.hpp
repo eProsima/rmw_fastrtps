@@ -185,7 +185,7 @@ create_datareader(
   eprosima::fastdds::dds::DataReader ** data_reader);
 
 RMW_FASTRTPS_SHARED_CPP_PUBLIC
-void log_memory_delta(const char* msg);
+void log_memory_delta(const char* msg, bool force=false);
 
 }  // namespace rmw_fastrtps_shared_cpp
 
