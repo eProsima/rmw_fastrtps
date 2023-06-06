@@ -69,14 +69,22 @@ public:
   RMW_FASTRTPS_SHARED_CPP_PUBLIC
   void
   on_publication_matched(
-    eprosima::fastdds::dds::DataWriter * /* writer */,
+    eprosima::fastdds::dds::DataWriter * writer,
     const eprosima::fastdds::dds::PublicationMatchedStatus & info) final
   {
     std::lock_guard<std::mutex> lock(discovery_m_);
+    eprosima::fastrtps::rtps::GUID_t subscription_guid =
+      eprosima::fastrtps::rtps::iHandle2GUID(info.last_subscription_handle);
     if (info.current_count_change == 1) {
-      subscriptions_.insert(eprosima::fastrtps::rtps::iHandle2GUID(info.last_subscription_handle));
+      subscriptions_.insert(subscription_guid);
+      if (writer->guid().guidPrefix != subscription_guid.guidPrefix) {
+        non_local_subscriptions_.insert(subscription_guid);
+      }
     } else if (info.current_count_change == -1) {
-      subscriptions_.erase(eprosima::fastrtps::rtps::iHandle2GUID(info.last_subscription_handle));
+      subscriptions_.erase(subscription_guid);
+      if (writer->guid().guidPrefix != subscription_guid.guidPrefix) {
+        non_local_subscriptions_.erase(subscription_guid);
+      }
     }
   }
 
@@ -105,6 +113,12 @@ public:
     return subscriptions_.size();
   }
 
+  size_t non_local_subscription_count()
+  {
+    std::lock_guard<std::mutex> lock(discovery_m_);
+    return non_local_subscriptions_.size();
+  }
+
   RMW_FASTRTPS_SHARED_CPP_PUBLIC
   eprosima::fastdds::dds::StatusCondition & get_statuscondition() const final;
 
@@ -128,6 +142,9 @@ private:
 
   std::set<eprosima::fastrtps::rtps::GUID_t> subscriptions_
   RCPPUTILS_TSA_GUARDED_BY(discovery_m_);
+
+  std::set<eprosima::fastrtps::rtps::GUID_t> non_local_subscriptions_
+  RCPPUTILS_TSA_PT_GUARDED_BY(discovery_m_);
 
   bool deadline_changes_
   RCPPUTILS_TSA_GUARDED_BY(on_new_event_m_);
