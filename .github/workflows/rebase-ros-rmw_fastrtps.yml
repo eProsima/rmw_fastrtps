@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        dest_branch: ['master', 'galactic', 'humble', 'iron', 'vulcanexus', 'vulcanexus-galactic', 'vulcanexus-humble', 'vulcanexus-iron']
+        dest_branch: ['master', 'humble', 'iron', 'vulcanexus', 'vulcanexus-humble', 'vulcanexus-iron']
         
     steps:
       # Step 1: run a standard checkout action, provided by github (REQUIRED)
@@ -34,24 +34,18 @@ jobs:
 
       # Step 3: Rebase
     - name: Rebase current branch to upstream changes
-      id: rebase_master_galactic
+      id: rebase_master
       run: |
         git fetch ros ${{ matrix.dest_branch }}
         git rebase ros/${{ matrix.dest_branch }}
       shell: bash
-      if: matrix.dest_branch == 'master' || matrix.dest_branch == 'galactic' || matrix.dest_branch == 'humble' || matrix.dest_branch == 'iron'
+      if: matrix.dest_branch == 'master' || matrix.dest_branch == 'humble' || matrix.dest_branch == 'iron'
     - id: rebase_vulcanexus
       run: |
         git fetch ros master
         git rebase ros/master
       shell: bash
       if: matrix.dest_branch == 'vulcanexus'
-    - id: rebase_vulcanexus_galactic
-      run: |
-        git fetch ros galactic
-        git rebase ros/galactic
-      shell: bash
-      if: matrix.dest_branch == 'vulcanexus-galactic'
     - id: rebase_vulcanexus_humble
       run: |
         git fetch ros humble
