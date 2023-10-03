@@ -135,8 +135,9 @@ __rmw_publish_loaned_message(
 
   RMW_CHECK_ARGUMENT_FOR_NULL(ros_message, RMW_RET_INVALID_ARGUMENT);
 
+  void * sample = const_cast<void*>(ros_message);
   auto info = static_cast<CustomPublisherInfo *>(publisher->data);
-  if (!info->data_writer_->write(const_cast<void *>(ros_message))) {
+  if (!info->data_writer_->write_loan(sample, return_loan)) {
     RMW_SET_ERROR_MSG("cannot publish data");
     return RMW_RET_ERROR;
   }
