@@ -166,6 +166,7 @@ __rmw_publish_loaned_message(
   const char * identifier,
   const rmw_publisher_t * publisher,
   const void * ros_message,
+  bool return_loan,
   rmw_publisher_allocation_t * allocation);
 
 RMW_FASTRTPS_SHARED_CPP_PUBLIC

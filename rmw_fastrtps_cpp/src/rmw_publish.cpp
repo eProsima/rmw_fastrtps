@@ -49,9 +49,10 @@ rmw_ret_t
 rmw_publish_loaned_message(
   const rmw_publisher_t * publisher,
   void * ros_message,
+  bool return_loan,
   rmw_publisher_allocation_t * allocation)
 {
   return rmw_fastrtps_shared_cpp::__rmw_publish_loaned_message(
-    eprosima_fastrtps_identifier, publisher, ros_message, allocation);
+    eprosima_fastrtps_identifier, publisher, ros_message, return_loan, allocation);
 }
 }  // extern "C"
