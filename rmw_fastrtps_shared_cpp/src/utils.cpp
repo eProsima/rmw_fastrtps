@@ -169,7 +169,20 @@ create_datareader(
   eprosima::fastdds::dds::DataReader ** data_reader
 )
 {
-  eprosima::fastdds::dds::DataReaderQos updated_qos = datareader_qos;
+  using PropertyPolicyHelper = eprosima::fastrtps::rtps::PropertyPolicyHelper;
+
+  eprosima::fastdds::dds::DataReaderQos input_qos = datareader_qos;
+  if (subscription_options->ignore_local_publications) {
+    if (nullptr ==
+      PropertyPolicyHelper::find_property(
+        input_qos.properties(),
+        "fastdds.match_local_endpoints"))
+    {
+      input_qos.properties().properties().emplace_back("fastdds.match_local_endpoints", "false");
+    }
+  }
+  
+  eprosima::fastdds::dds::DataReaderQos updated_qos = input_qos;
   switch (subscription_options->require_unique_network_flow_endpoints) {
     default:
     case RMW_UNIQUE_NETWORK_FLOW_ENDPOINTS_SYSTEM_DEFAULT:
@@ -180,7 +193,6 @@ create_datareader(
     case RMW_UNIQUE_NETWORK_FLOW_ENDPOINTS_OPTIONALLY_REQUIRED:
     case RMW_UNIQUE_NETWORK_FLOW_ENDPOINTS_STRICTLY_REQUIRED:
       // Ensure we request unique network flow endpoints
-      using PropertyPolicyHelper = eprosima::fastrtps::rtps::PropertyPolicyHelper;
       if (nullptr ==
         PropertyPolicyHelper::find_property(
           updated_qos.properties(),
@@ -203,7 +215,7 @@ create_datareader(
   {
     *data_reader = subscriber->create_datareader(
       des_topic,
-      datareader_qos,
+      input_qos,
       listener,
       eprosima::fastdds::dds::StatusMask::subscription_matched());
   }
