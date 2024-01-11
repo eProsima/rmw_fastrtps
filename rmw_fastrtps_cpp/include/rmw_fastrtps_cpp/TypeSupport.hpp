@@ -42,6 +42,9 @@ public:
   bool deserializeROSmessage(
     eprosima::fastcdr::Cdr & deser, void * ros_message, const void * impl) const override;
 
+  bool getKeyHashFromROSmessage(
+    void * ros_message, eprosima::fastrtps::rtps::InstanceHandle_t * ihandle, bool force_md5, const void * impl) const override;
+
   TypeSupport();
 
 protected:
@@ -49,6 +52,7 @@ protected:
 
 private:
   const message_type_support_callbacks_t * members_;
+  message_type_support_key_callbacks_t  key_callbacks_;
   bool has_data_;
 };
 
