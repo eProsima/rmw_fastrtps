@@ -61,15 +61,14 @@ public:
   virtual bool deserializeROSmessage(
     eprosima::fastcdr::Cdr & deser, void * ros_message, const void * impl) const = 0;
 
+  virtual bool getKeyHashFromROSmessage(
+    void * ros_message, eprosima::fastrtps::rtps::InstanceHandle_t * ihandle, bool force_md5, const void * impl) const = 0;
+
   RMW_FASTRTPS_SHARED_CPP_PUBLIC
   bool getKey(
     void * data,
     eprosima::fastrtps::rtps::InstanceHandle_t * ihandle,
-    bool force_md5 = false) override
-  {
-    (void)data; (void)ihandle; (void)force_md5;
-    return false;
-  }
+    bool force_md5 = false) override;
 
   RMW_FASTRTPS_SHARED_CPP_PUBLIC
   bool serialize(void * data, eprosima::fastrtps::rtps::SerializedPayload_t * payload) override;
