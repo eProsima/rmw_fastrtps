@@ -33,6 +33,7 @@ TypeSupport::TypeSupport()
 void TypeSupport::set_members(const message_type_support_callbacks_t * members)
 {
   members_ = members;
+  m_isGetKeyDefined = members->get_key_type_support(&key_callbacks_);
 
 #ifdef ROSIDL_TYPESUPPORT_FASTRTPS_HAS_PLAIN_TYPES
   char bounds_info;
@@ -122,6 +123,16 @@ bool TypeSupport::deserializeROSmessage(
   }
 
   return true;
+}
+
+bool TypeSupport::getKeyHashFromROSmessage(
+    void *,
+    eprosima::fastrtps::rtps::InstanceHandle_t *,
+    bool,
+    const void *) const
+{
+  //!TODO
+  return false;
 }
 
 MessageTypeSupport::MessageTypeSupport(const message_type_support_callbacks_t * members)
