@@ -23,7 +23,6 @@
 
 #include "fastcdr/FastBuffer.h"
 #include "fastcdr/Cdr.h"
-#include "fastrtps/utils/md5.h"
 
 #include "rcutils/logging_macros.h"
 
@@ -184,11 +183,6 @@ protected:
   size_t calculateMaxSerializedSize(const MembersType * members, size_t current_alignment, size_t& max_key_size);
 
   const MembersType * members_;
-
-  bool key_is_unbounded_;
-  mutable size_t key_max_serialized_size_;
-  mutable MD5 md5_;
-  mutable std::vector<uint8_t> key_buffer_;
 
 private:
   size_t getEstimatedSerializedSize(
