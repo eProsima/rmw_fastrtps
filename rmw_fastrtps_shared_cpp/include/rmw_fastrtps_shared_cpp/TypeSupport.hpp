@@ -25,6 +25,7 @@
 
 #include "fastcdr/FastBuffer.h"
 #include "fastcdr/Cdr.h"
+#include "fastrtps/utils/md5.h"
 
 #include "rcutils/logging_macros.h"
 
@@ -112,6 +113,10 @@ protected:
 
   bool max_size_bound_;
   bool is_plain_;
+  bool key_is_unbounded_;
+  mutable size_t key_max_serialized_size_;
+  mutable MD5 md5_;
+  mutable std::vector<uint8_t> key_buffer_;
 };
 
 RMW_FASTRTPS_SHARED_CPP_PUBLIC
