@@ -33,11 +33,12 @@ namespace rmw_fastrtps_dynamic_cpp
 
 template<typename MembersType>
 MessageTypeSupport<MembersType>::MessageTypeSupport(
-  const MembersType * members, const void * ros_type_support)
+  const MembersType * members, const void * ros_type_support, uint8_t abi_version)
 : TypeSupport<MembersType>(ros_type_support)
 {
   assert(members);
   this->members_ = members;
+  this->abi_version_ = abi_version;
 
   std::ostringstream ss;
   std::string message_namespace(this->members_->message_namespace_);
