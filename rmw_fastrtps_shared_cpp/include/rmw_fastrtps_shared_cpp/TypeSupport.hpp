@@ -54,6 +54,13 @@ struct SerializedData
 class TypeSupport : public eprosima::fastdds::dds::TopicDataType
 {
 public:
+
+  enum AbiVersion
+  {
+    ABI_V1 = 1,
+    ABI_V2
+  };
+
   virtual size_t getEstimatedSerializedSize(const void * ros_message, const void * impl) const = 0;
 
   virtual bool serializeROSmessage(
@@ -111,6 +118,7 @@ protected:
   RMW_FASTRTPS_SHARED_CPP_PUBLIC
   TypeSupport();
 
+  mutable uint8_t abi_version_;
   bool max_size_bound_;
   bool is_plain_;
   bool key_is_unbounded_;
