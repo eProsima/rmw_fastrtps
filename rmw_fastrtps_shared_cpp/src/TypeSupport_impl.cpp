@@ -64,6 +64,50 @@ void * TypeSupport::createData()
   return new eprosima::fastcdr::FastBuffer();
 }
 
+bool TypeSupport::getKey(
+    void * data,
+    eprosima::fastrtps::rtps::InstanceHandle_t * ihandle,
+    bool force_md5)
+{
+  assert(data);
+
+  bool ret = false;
+
+  if (!m_isGetKeyDefined)
+  {
+      return ret;
+  }
+
+  auto ser_data = static_cast<SerializedData *>(data);
+
+  switch (ser_data->type)
+  {
+    case FASTRTPS_SERIALIZED_DATA_TYPE_ROS_MESSAGE:
+      {
+        ret = this->getKeyHashFromROSmessage(ser_data->data, ihandle, force_md5, ser_data->impl);
+        break;
+      }
+
+    case FASTRTPS_SERIALIZED_DATA_TYPE_CDR_BUFFER:
+      {
+        //! TODO
+        break;
+      }
+
+    case FASTRTPS_SERIALIZED_DATA_TYPE_DYNAMIC_MESSAGE:
+      {
+        //! TODO
+        break;
+      }
+    default:
+      {
+        break;
+      }
+  }
+
+  return ret;
+}
+
 bool TypeSupport::serialize(
   void * data, eprosima::fastrtps::rtps::SerializedPayload_t * payload)
 {

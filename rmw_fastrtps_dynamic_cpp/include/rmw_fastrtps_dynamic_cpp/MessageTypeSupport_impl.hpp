@@ -56,10 +56,17 @@ MessageTypeSupport<MembersType>::MessageTypeSupport(
   // Encapsulation size
   this->m_typeSize = 4;
   if (this->members_->member_count_ != 0) {
-    this->m_typeSize += static_cast<uint32_t>(this->calculateMaxSerializedSize(members, 0));
+    this->m_typeSize += static_cast<uint32_t>(this->calculateMaxSerializedSize(members, 0, this->key_max_serialized_size_));
   } else {
     this->m_typeSize++;
   }
+
+  if (this->key_max_serialized_size_ != 0)
+  {
+    this->m_isGetKeyDefined = true;
+    this->key_buffer_.reserve(this->key_max_serialized_size_);
+  }
+
   // Account for RTPS submessage alignment
   this->m_typeSize = (this->m_typeSize + 3) & ~3;
 }
