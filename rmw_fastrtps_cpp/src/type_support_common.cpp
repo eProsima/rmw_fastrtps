@@ -23,8 +23,22 @@
 namespace rmw_fastrtps_cpp
 {
 
+uint8_t get_type_support_abi_version(const char * identifier)
+{
+  uint8_t abi_version = rmw_fastrtps_shared_cpp::TypeSupport::AbiVersion::ABI_V1;
+
+  if (strcmp(identifier, RMW_FASTRTPS_CPP_TYPESUPPORT_C_V2) == 0 ||
+      strcmp(identifier, RMW_FASTRTPS_CPP_TYPESUPPORT_CPP_V2) == 0)
+  {
+    abi_version = rmw_fastrtps_shared_cpp::TypeSupport::AbiVersion::ABI_V2;
+  }
+
+  return abi_version;
+}
+
 TypeSupport::TypeSupport()
 {
+  abi_version_ = AbiVersion::ABI_V1;
   m_isGetKeyDefined = false;
   max_size_bound_ = false;
   is_plain_ = false;
@@ -35,7 +49,6 @@ TypeSupport::TypeSupport()
 void TypeSupport::set_members(const message_type_support_callbacks_t * members)
 {
   members_ = members;
-  m_isGetKeyDefined = members->get_key_type_support(&this->key_callbacks_);
 
 #ifdef ROSIDL_TYPESUPPORT_FASTRTPS_HAS_PLAIN_TYPES
   char bounds_info;
@@ -56,27 +69,28 @@ void TypeSupport::set_members(const message_type_support_callbacks_t * members)
     has_data_ = true;
   }
 
-  if (m_isGetKeyDefined)
-  {
-    std::cout << "Calculating max_serialized_key_size " << (&key_callbacks_.max_serialized_key_size) << std::endl;
-    this->key_max_serialized_size_ = this->key_callbacks_.max_serialized_key_size(0, this->key_is_unbounded_);
-    std::cout << "FInishing max_serialized_key_size" << std::endl;
-    if (!this->key_is_unbounded_)
-    {
-      this->key_buffer_.reserve(this->key_max_serialized_size_);
-    }
-    else
-    {
-      std::cout << "KEY is UNBOUNDED" << std::endl;
-    }
-
-    std::cout << "this->key_max_serialized_size_ " << this->key_max_serialized_size_ << std::endl;
-  }
-
   // Total size is encapsulation size + data size
   m_typeSize = 4 + data_size;
   // Account for RTPS submessage alignment
   m_typeSize = (m_typeSize + 3) & ~3;
+}
+
+void TypeSupport::set_members_v2(const message_type_support_callbacks_t * members)
+{
+
+  set_members(members);
+
+  if (nullptr != members->key_callbacks)
+  {
+    this->key_callbacks_ = members->key_callbacks;
+    m_isGetKeyDefined = true;
+
+    this->key_max_serialized_size_ = this->key_callbacks_->max_serialized_key_size(0, this->key_is_unbounded_);
+    if (!this->key_is_unbounded_)
+    {
+      this->key_buffer_.reserve(this->key_max_serialized_size_);
+    }
+  }
 }
 
 size_t TypeSupport::getEstimatedSerializedSize(const void * ros_message, const void * impl) const
@@ -166,11 +180,8 @@ bool TypeSupport::getKeyHashFromROSmessage(
   //! retrieve estimated serialized size in case key is unbounded
   if (this->key_is_unbounded_)
   {
-    std::cout << "Static Re-stimating serialize size. Before " << this->key_max_serialized_size_ << std::endl;
-    this->key_max_serialized_size_ = key_callbacks_.get_serialized_key_size(ros_message, 0);
-    std::cout << "Static Re-stimating serialize size. After " << this->key_max_serialized_size_ << std::endl;
+    this->key_max_serialized_size_ = key_callbacks_->get_serialized_key_size(ros_message, 0);
     this->key_buffer_.reserve(this->key_max_serialized_size_);
-    std::cout << "Static New key buffer capacity " << this->key_buffer_.capacity() << std::endl;
   }
 
   eprosima::fastcdr::FastBuffer fast_buffer(
@@ -180,7 +191,7 @@ bool TypeSupport::getKeyHashFromROSmessage(
   eprosima::fastcdr::Cdr ser(
     fast_buffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN, eprosima::fastcdr::Cdr::DDS_CDR);
 
-  key_callbacks_.cdr_serialize_key(ros_message, ser);
+  key_callbacks_->cdr_serialize_key(ros_message, ser);
 
     //! check for md5
   if (force_md5 || this->key_max_serialized_size_ > 16)
@@ -209,19 +220,38 @@ bool TypeSupport::getKeyHashFromROSmessage(
     }
   }
 
-  std::cout << "\nFinishing static::getKeyHashFromROSmessage() "  << ihandle->value << std::endl;
-
   return true;
 }
 
-MessageTypeSupport::MessageTypeSupport(const message_type_support_callbacks_t * members)
+MessageTypeSupport::MessageTypeSupport(
+  const message_type_support_callbacks_t * members,
+  uint8_t abi_version)
 {
   assert(members);
+
+  abi_version_ = abi_version;
 
   std::string name = _create_type_name(members);
   this->setName(name.c_str());
 
-  set_members(members);
+  switch (abi_version)
+  {
+    case TypeSupport::AbiVersion::ABI_V1:
+    {
+      set_members(members);
+      break;
+    }
+    case TypeSupport::AbiVersion::ABI_V2:
+    {
+      set_members_v2(members);
+      break;
+    }
+    default:
+    {
+      set_members(members);
+      break;
+    }
+  }
 }
 
 ServiceTypeSupport::ServiceTypeSupport()

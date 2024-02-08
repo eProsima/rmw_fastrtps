@@ -31,6 +31,8 @@
 namespace rmw_fastrtps_cpp
 {
 
+uint8_t get_type_support_abi_version(const char * identifier);
+
 class TypeSupport : public rmw_fastrtps_shared_cpp::TypeSupport
 {
 public:
@@ -50,9 +52,11 @@ public:
 protected:
   void set_members(const message_type_support_callbacks_t * members);
 
+  void set_members_v2(const message_type_support_callbacks_t * members);
+
 private:
   const message_type_support_callbacks_t * members_;
-  message_type_support_key_callbacks_t  key_callbacks_;
+  message_type_support_key_callbacks_t*  key_callbacks_;
   bool has_data_;
 };
 
