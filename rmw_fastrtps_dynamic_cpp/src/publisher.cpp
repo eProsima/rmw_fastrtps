@@ -270,6 +270,14 @@ rmw_fastrtps_dynamic_cpp::create_publisher(
     return nullptr;
   }
 
+  /// Apply resource limits QoS if the type is keyed
+  if (fastdds_type->m_isGetKeyDefined)
+  {
+    rmw_fastrtps_shared_cpp::apply_qos_resource_limits_for_keys(
+      writer_qos.history(),
+      writer_qos.resource_limits());
+  }
+
   // Creates DataWriter (with publisher name to not change name policy)
   info->data_writer_ = publisher->create_datawriter(
     info->topic_,

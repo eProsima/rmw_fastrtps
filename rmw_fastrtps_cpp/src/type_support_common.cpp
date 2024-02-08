@@ -23,11 +23,27 @@
 namespace rmw_fastrtps_cpp
 {
 
+uint8_t get_type_support_abi_version(const char * identifier)
+{
+  uint8_t abi_version = rmw_fastrtps_shared_cpp::TypeSupport::AbiVersion::ABI_V1;
+
+  if (strcmp(identifier, RMW_FASTRTPS_CPP_TYPESUPPORT_C_V2) == 0 ||
+      strcmp(identifier, RMW_FASTRTPS_CPP_TYPESUPPORT_CPP_V2) == 0)
+  {
+    abi_version = rmw_fastrtps_shared_cpp::TypeSupport::AbiVersion::ABI_V2;
+  }
+
+  return abi_version;
+}
+
 TypeSupport::TypeSupport()
 {
+  abi_version_ = AbiVersion::ABI_V1;
   m_isGetKeyDefined = false;
   max_size_bound_ = false;
   is_plain_ = false;
+  key_is_unbounded_ = false;
+  key_max_serialized_size_ = 0;
 }
 
 void TypeSupport::set_members(const message_type_support_callbacks_t * members)
@@ -57,6 +73,24 @@ void TypeSupport::set_members(const message_type_support_callbacks_t * members)
   m_typeSize = 4 + data_size;
   // Account for RTPS submessage alignment
   m_typeSize = (m_typeSize + 3) & ~3;
+}
+
+void TypeSupport::set_members_v2(const message_type_support_callbacks_t * members)
+{
+
+  set_members(members);
+
+  if (nullptr != members->key_callbacks)
+  {
+    this->key_callbacks_ = members->key_callbacks;
+    m_isGetKeyDefined = true;
+
+    this->key_max_serialized_size_ = this->key_callbacks_->max_serialized_key_size(0, this->key_is_unbounded_);
+    if (!this->key_is_unbounded_)
+    {
+      this->key_buffer_.reserve(this->key_max_serialized_size_);
+    }
+  }
 }
 
 size_t TypeSupport::getEstimatedSerializedSize(const void * ros_message, const void * impl) const
@@ -129,14 +163,95 @@ bool TypeSupport::deserializeROSmessage(
   return true;
 }
 
-MessageTypeSupport::MessageTypeSupport(const message_type_support_callbacks_t * members)
+bool TypeSupport::getKeyHashFromROSmessage(
+    void * ros_message,
+    eprosima::fastrtps::rtps::InstanceHandle_t * ihandle,
+    bool force_md5,
+    const void * impl) const
+{
+  assert(ros_message);
+  (void)impl;
+
+  /*if (capacity < 16)
+  {
+    throw std::runtime_error("Not enough capacity to serialize key");
+  }*/
+
+  //! retrieve estimated serialized size in case key is unbounded
+  if (this->key_is_unbounded_)
+  {
+    this->key_max_serialized_size_ = key_callbacks_->get_serialized_key_size(ros_message, 0);
+    this->key_buffer_.reserve(this->key_max_serialized_size_);
+  }
+
+  eprosima::fastcdr::FastBuffer fast_buffer(
+    reinterpret_cast<char *>(this->key_buffer_.data()),
+    this->key_max_serialized_size_);
+
+  eprosima::fastcdr::Cdr ser(
+    fast_buffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN, eprosima::fastcdr::Cdr::DDS_CDR);
+
+  key_callbacks_->cdr_serialize_key(ros_message, ser);
+
+    //! check for md5
+  if (force_md5 || this->key_max_serialized_size_ > 16)
+  {
+
+    this->md5_.init();
+
+#if FASTCDR_VERSION_MAJOR == 1
+    this->md5_.update(this->key_buffer_.data(), static_cast<unsigned int>(ser.getSerializedDataLength()));
+#else
+    this->md5_.update(this->key_buffer_.data(), static_cast<unsigned int>(ser.get_serialized_data_length()));
+#endif // FASTCDR_VERSION_MAJOR == 1
+
+    this->md5_.finalize();
+
+    for (uint8_t i = 0; i < 16; ++i)
+    {
+      ihandle->value[i] = md5_.digest[i];
+    }
+  }
+  else
+  {
+    for (uint8_t i = 0; i < 16; ++i)
+    {
+        ihandle->value[i] = this->key_buffer_[i];
+    }
+  }
+
+  return true;
+}
+
+MessageTypeSupport::MessageTypeSupport(
+  const message_type_support_callbacks_t * members,
+  uint8_t abi_version)
 {
   assert(members);
+
+  abi_version_ = abi_version;
 
   std::string name = _create_type_name(members);
   this->setName(name.c_str());
 
-  set_members(members);
+  switch (abi_version)
+  {
+    case TypeSupport::AbiVersion::ABI_V1:
+    {
+      set_members(members);
+      break;
+    }
+    case TypeSupport::AbiVersion::ABI_V2:
+    {
+      set_members_v2(members);
+      break;
+    }
+    default:
+    {
+      set_members(members);
+      break;
+    }
+  }
 }
 
 ServiceTypeSupport::ServiceTypeSupport()

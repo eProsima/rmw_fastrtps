@@ -122,6 +122,8 @@ rmw_fastrtps_cpp::create_publisher(
     }
   }
 
+  uint8_t abi_version = get_type_support_abi_version(type_support->typesupport_identifier);
+
   std::lock_guard<std::mutex> lck(participant_info->entity_creation_mutex_);
 
   /////
@@ -176,7 +178,7 @@ rmw_fastrtps_cpp::create_publisher(
   /////
   // Create the Type Support struct
   if (!fastdds_type) {
-    auto tsupport = new (std::nothrow) MessageTypeSupport_cpp(callbacks);
+    auto tsupport = new (std::nothrow) MessageTypeSupport_cpp(callbacks, abi_version);
     if (!tsupport) {
       RMW_SET_ERROR_MSG("create_publisher() failed to allocate MessageTypeSupport");
       return nullptr;
@@ -262,6 +264,14 @@ rmw_fastrtps_cpp::create_publisher(
   {
     RMW_SET_ERROR_MSG("create_publisher() failed setting data writer QoS");
     return nullptr;
+  }
+
+  /// Apply resource limits QoS if the type is keyed
+  if (fastdds_type->m_isGetKeyDefined)
+  {
+    rmw_fastrtps_shared_cpp::apply_qos_resource_limits_for_keys(
+      writer_qos.history(),
+      writer_qos.resource_limits());
   }
 
   // Creates DataWriter with a mask enabling publication_matched calls for the listener
