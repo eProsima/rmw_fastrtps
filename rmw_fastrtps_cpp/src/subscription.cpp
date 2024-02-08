@@ -494,6 +494,8 @@ __create_subscription(
     }
   }
 
+  uint8_t abi_version = get_type_support_abi_version(type_support->typesupport_identifier);
+
   std::lock_guard<std::mutex> lck(participant_info->entity_creation_mutex_);
 
   /////
@@ -549,7 +551,7 @@ __create_subscription(
   /////
   // Create the Type Support struct
   if (!fastdds_type) {
-    auto tsupport = new (std::nothrow) MessageTypeSupport_cpp(callbacks);
+    auto tsupport = new (std::nothrow) MessageTypeSupport_cpp(callbacks, abi_version);
     if (!tsupport) {
       RMW_SET_ERROR_MSG("create_subscription() failed to allocate MessageTypeSupport");
       return nullptr;
