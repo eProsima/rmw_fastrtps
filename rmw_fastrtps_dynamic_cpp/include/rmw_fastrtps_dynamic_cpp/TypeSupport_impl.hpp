@@ -311,7 +311,9 @@ bool TypeSupport<MembersType>::serializeKeyROSmessage(
   for (uint32_t i = 0; i < members->member_count_; ++i) {
     const auto member = members->members_ + i;
 
-    if (check_if_member_is_key && !member->is_key_)
+    if (check_if_member_is_key &&
+        this->abi_version_ != AbiVersion::ABI_V1 &&
+        !*(members->key_members_array_+i))
     {
       continue;
     }
@@ -638,7 +640,9 @@ size_t TypeSupport<MembersType>::getEstimatedSerializedSize(
     const auto member = members->members_ + i;
     void * field = const_cast<char *>(static_cast<const char *>(ros_message)) + member->offset_;
 
-    if (compute_key_members_only && !member->is_key_)
+    if (compute_key_members_only &&
+        this->abi_version_ != AbiVersion::ABI_V1 &&
+        !*(members->key_members_array_+i))
     {
       continue;
     }
@@ -1000,7 +1004,8 @@ size_t TypeSupport<MembersType>::calculateMaxSerializedSize(
     size_t array_size = 1;
     bool member_is_key = false;
 
-    if (member->is_key_)
+    if (this->abi_version_ != AbiVersion::ABI_V1 &&
+        *(members->key_members_array_+i))
     {
       member_is_key = true;
     }
