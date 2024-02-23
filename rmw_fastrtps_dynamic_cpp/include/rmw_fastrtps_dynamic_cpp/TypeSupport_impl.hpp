@@ -407,7 +407,7 @@ bool TypeSupport<MembersType>::serializeKeyROSmessage(
 }
 
 template<typename MembersType>
-bool TypeSupport<MembersType>::getKeyHashFromROSmessage(
+bool TypeSupport<MembersType>::get_key_hash_from_ros_message(
   const MembersType * members,
   void * ros_message,
   eprosima::fastrtps::rtps::InstanceHandle_t * ihandle,
@@ -1215,7 +1215,7 @@ bool TypeSupport<MembersType>::deserializeROSmessage(
 }
 
 template<typename MembersType>
-bool TypeSupport<MembersType>::getKeyHashFromROSmessage(
+bool TypeSupport<MembersType>::get_key_hash_from_ros_message(
     void * ros_message, eprosima::fastrtps::rtps::InstanceHandle_t * ihandle, bool force_md5, const void * impl) const
 {
 
@@ -1227,7 +1227,7 @@ bool TypeSupport<MembersType>::getKeyHashFromROSmessage(
   (void)impl;
   if (members_->member_count_ != 0)
   {
-    ret = TypeSupport::getKeyHashFromROSmessage(members_, ros_message, ihandle, force_md5);
+    ret = TypeSupport::get_key_hash_from_ros_message(members_, ros_message, ihandle, force_md5);
   }
 
   return ret;
