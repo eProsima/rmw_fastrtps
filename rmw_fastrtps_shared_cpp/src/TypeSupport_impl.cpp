@@ -258,15 +258,27 @@ get_type_support_introspection(const rosidl_message_type_support_t * type_suppor
       type_supports,
       rosidl_typesupport_introspection_cpp::typesupport_identifier);
     if (nullptr == type_support) {
-      rcutils_error_string_t error_string = rcutils_get_error_string();
-      rcutils_reset_error();
-      RMW_SET_ERROR_MSG_WITH_FORMAT_STRING(
-        "Type support not from this implementation. Got:\n"
-        "    %s\n"
-        "    %s\n"
-        "while fetching it",
-        prev_error_string.str, error_string.str);
-      return nullptr;
+      type_support =
+      get_message_typesupport_handle(
+      type_supports,
+      rosidl_typesupport_introspection_c__identifier_v2);
+      if (nullptr == type_support) {
+        type_support =
+      get_message_typesupport_handle(
+      type_supports,
+      rosidl_typesupport_introspection_cpp::typesupport_identifier_v2);
+        if (nullptr == type_support) {
+          rcutils_error_string_t error_string = rcutils_get_error_string();
+          rcutils_reset_error();
+          RMW_SET_ERROR_MSG_WITH_FORMAT_STRING(
+            "Type support not from this implementation. Got:\n"
+            "    %s\n"
+            "    %s\n"
+            "while fetching it",
+            prev_error_string.str, error_string.str);
+          return nullptr;
+        }
+      }
     }
   }
 
