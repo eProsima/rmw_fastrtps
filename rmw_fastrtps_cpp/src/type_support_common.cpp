@@ -44,6 +44,9 @@ TypeSupport::TypeSupport()
   is_plain_ = false;
   key_is_unbounded_ = false;
   key_max_serialized_size_ = 0;
+  members_ = nullptr;
+  key_callbacks_ = nullptr;
+  has_data_ = false;
 }
 
 void TypeSupport::set_members(const message_type_support_callbacks_t * members)
@@ -82,13 +85,13 @@ void TypeSupport::set_members_v2(const message_type_support_callbacks_t * member
 
   if (nullptr != members->key_callbacks)
   {
-    this->key_callbacks_ = members->key_callbacks;
+    key_callbacks_ = members->key_callbacks;
     m_isGetKeyDefined = true;
 
-    this->key_max_serialized_size_ = this->key_callbacks_->max_serialized_key_size(0, this->key_is_unbounded_);
-    if (!this->key_is_unbounded_)
+    key_max_serialized_size_ = key_callbacks_->max_serialized_size_key(0, key_is_unbounded_);
+    if (!key_is_unbounded_)
     {
-      this->key_buffer_.reserve(this->key_max_serialized_size_);
+      key_buffer_.reserve(key_max_serialized_size_);
     }
   }
 }
@@ -163,7 +166,7 @@ bool TypeSupport::deserializeROSmessage(
   return true;
 }
 
-bool TypeSupport::getKeyHashFromROSmessage(
+bool TypeSupport::get_key_hash_from_ros_message(
     void * ros_message,
     eprosima::fastrtps::rtps::InstanceHandle_t * ihandle,
     bool force_md5,
@@ -172,51 +175,48 @@ bool TypeSupport::getKeyHashFromROSmessage(
   assert(ros_message);
   (void)impl;
 
-  /*if (capacity < 16)
+  // retrieve estimated serialized size in case key is unbounded
+  if (key_is_unbounded_)
   {
-    throw std::runtime_error("Not enough capacity to serialize key");
-  }*/
-
-  //! retrieve estimated serialized size in case key is unbounded
-  if (this->key_is_unbounded_)
-  {
-    this->key_max_serialized_size_ = key_callbacks_->get_serialized_key_size(ros_message, 0);
-    this->key_buffer_.reserve(this->key_max_serialized_size_);
+    key_max_serialized_size_ = (std::max) (key_callbacks_->get_serialized_size_key(ros_message, 0), (size_t)0);
+    key_buffer_.reserve(key_max_serialized_size_);
   }
 
   eprosima::fastcdr::FastBuffer fast_buffer(
-    reinterpret_cast<char *>(this->key_buffer_.data()),
-    this->key_max_serialized_size_);
+    reinterpret_cast<char *>(key_buffer_.data()),
+    key_max_serialized_size_);
 
   eprosima::fastcdr::Cdr ser(
     fast_buffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN, eprosima::fastcdr::Cdr::DDS_CDR);
 
   key_callbacks_->cdr_serialize_key(ros_message, ser);
 
-    //! check for md5
-  if (force_md5 || this->key_max_serialized_size_ > 16)
-  {
+  const size_t max_serialized_key_length = 16;
 
-    this->md5_.init();
-
-#if FASTCDR_VERSION_MAJOR == 1
-    this->md5_.update(this->key_buffer_.data(), static_cast<unsigned int>(ser.getSerializedDataLength()));
+  #if FASTCDR_VERSION_MAJOR == 1
+  auto ser_length = ser.getSerializedDataLength();
 #else
-    this->md5_.update(this->key_buffer_.data(), static_cast<unsigned int>(ser.get_serialized_data_length()));
+  auto ser_length = ser.get_serialized_data_length();
 #endif // FASTCDR_VERSION_MAJOR == 1
 
-    this->md5_.finalize();
+  // check for md5
+  if (force_md5 || key_max_serialized_size_ > max_serialized_key_length)
+  {
+    md5_.init();
+    md5_.update(key_buffer_.data(), static_cast<unsigned int>(ser_length));
+    md5_.finalize();
 
-    for (uint8_t i = 0; i < 16; ++i)
+    for (uint8_t i = 0; i < max_serialized_key_length; ++i)
     {
       ihandle->value[i] = md5_.digest[i];
     }
   }
   else
   {
-    for (uint8_t i = 0; i < 16; ++i)
+    memset(ihandle->value, 0, max_serialized_key_length);
+    for (uint8_t i = 0; i < ser_length; ++i)
     {
-        ihandle->value[i] = this->key_buffer_[i];
+        ihandle->value[i] = key_buffer_[i];
     }
   }
 

@@ -167,14 +167,6 @@ __rmw_subscription_set_content_filter(
     des_topic = info->topic_;
   }
 
-  /// Apply resource limits QoS if the type is keyed
-  if (info->type_support_->m_isGetKeyDefined)
-  {
-    apply_qos_resource_limits_for_keys(
-      info->datareader_qos_.history(),
-      info->datareader_qos_.resource_limits());
-  }
-
   // create data reader
   eprosima::fastdds::dds::Subscriber * subscriber = info->subscriber_;
   const rmw_subscription_options_t * subscription_options =

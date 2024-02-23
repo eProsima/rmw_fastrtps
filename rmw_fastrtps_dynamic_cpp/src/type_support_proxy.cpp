@@ -47,11 +47,11 @@ bool TypeSupportProxy::deserializeROSmessage(
   return type_impl->deserializeROSmessage(deser, ros_message, impl);
 }
 
-bool TypeSupportProxy::getKeyHashFromROSmessage(
+bool TypeSupportProxy::get_key_hash_from_ros_message(
     void * ros_message, eprosima::fastrtps::rtps::InstanceHandle_t * ihandle, bool force_md5, const void * impl) const
 {
   auto type_impl = static_cast<const rmw_fastrtps_shared_cpp::TypeSupport *>(impl);
-  return type_impl->getKeyHashFromROSmessage(ros_message, ihandle, force_md5, impl);
+  return type_impl->get_key_hash_from_ros_message(ros_message, ihandle, force_md5, impl);
 }
 
 }  // namespace rmw_fastrtps_dynamic_cpp

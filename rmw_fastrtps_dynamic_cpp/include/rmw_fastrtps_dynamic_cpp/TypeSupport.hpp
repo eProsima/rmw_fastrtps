@@ -139,7 +139,7 @@ public:
   bool deserializeROSmessage(
     eprosima::fastcdr::Cdr & deser, void * ros_message, const void * impl) const override;
 
-  bool getKeyHashFromROSmessage(
+  bool get_key_hash_from_ros_message(
     void * ros_message, eprosima::fastrtps::rtps::InstanceHandle_t * ihandle, bool force_md5, const void * impl) const override;
 
 };
@@ -174,7 +174,7 @@ public:
   bool deserializeROSmessage(
     eprosima::fastcdr::Cdr & deser, void * ros_message, const void * impl) const override;
 
-  bool getKeyHashFromROSmessage(
+  bool get_key_hash_from_ros_message(
     void * ros_message, eprosima::fastrtps::rtps::InstanceHandle_t * ihandle, bool force_md5, const void * impl) const override;
 
 protected:
@@ -207,7 +207,7 @@ private:
     void * ros_message,
     bool check_if_member_is_key) const;
 
-  bool getKeyHashFromROSmessage(
+  bool get_key_hash_from_ros_message(
     const MembersType * members,
     void * ros_message,
     eprosima::fastrtps::rtps::InstanceHandle_t * ihandle,

@@ -324,7 +324,8 @@ rmw_create_client(
   }
 
   /// Apply resource limits QoS if the type is keyed
-  if (response_fastdds_type->m_isGetKeyDefined)
+  if (response_fastdds_type->m_isGetKeyDefined &&
+      !participant_info->leave_middleware_default_qos)
   {
     rmw_fastrtps_shared_cpp::apply_qos_resource_limits_for_keys(
       reader_qos.history(),
@@ -390,7 +391,8 @@ rmw_create_client(
   }
 
   /// Apply resource limits QoS if the type is keyed
-  if (request_fastdds_type->m_isGetKeyDefined)
+  if (request_fastdds_type->m_isGetKeyDefined &&
+      !participant_info->leave_middleware_default_qos)
   {
     rmw_fastrtps_shared_cpp::apply_qos_resource_limits_for_keys(
       writer_qos.history(),
