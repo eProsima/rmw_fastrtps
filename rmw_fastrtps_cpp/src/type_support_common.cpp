@@ -178,7 +178,9 @@ bool TypeSupport::get_key_hash_from_ros_message(
   // retrieve estimated serialized size in case key is unbounded
   if (key_is_unbounded_)
   {
-    key_max_serialized_size_ = (std::max) (key_callbacks_->get_serialized_size_key(ros_message, 0), (size_t)0);
+    key_max_serialized_size_ = (std::max) (
+      key_max_serialized_size_,
+      key_callbacks_->get_serialized_size_key(ros_message, 0));
     key_buffer_.reserve(key_max_serialized_size_);
   }
 
