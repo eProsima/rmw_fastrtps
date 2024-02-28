@@ -88,7 +88,7 @@ void TypeSupport::set_members_v2(const message_type_support_callbacks_t * member
     key_callbacks_ = members->key_callbacks;
     m_isGetKeyDefined = true;
 
-    key_max_serialized_size_ = key_callbacks_->max_serialized_size_key(0, key_is_unbounded_);
+    key_max_serialized_size_ = key_callbacks_->max_serialized_size_key(key_is_unbounded_);
     if (!key_is_unbounded_)
     {
       key_buffer_.reserve(key_max_serialized_size_);
@@ -180,7 +180,7 @@ bool TypeSupport::get_key_hash_from_ros_message(
   {
     key_max_serialized_size_ = (std::max) (
       key_max_serialized_size_,
-      key_callbacks_->get_serialized_size_key(ros_message, 0));
+      key_callbacks_->get_serialized_size_key(ros_message));
     key_buffer_.reserve(key_max_serialized_size_);
   }
 
