@@ -438,11 +438,7 @@ bool TypeSupport<MembersType>::get_key_hash_from_ros_message(
   {
       md5_.init();
 
-#if FASTCDR_VERSION_MAJOR == 1
       md5_.update(this->key_buffer_.data(), static_cast<unsigned int>(ser.getSerializedDataLength()));
-#else
-      md5_.update(this->key_buffer_.data(), static_cast<unsigned int>(ser.get_serialized_data_length()));
-#endif // FASTCDR_VERSION_MAJOR == 1
 
       md5_.finalize();
 

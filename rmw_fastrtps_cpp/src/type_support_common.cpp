@@ -195,11 +195,7 @@ bool TypeSupport::get_key_hash_from_ros_message(
 
   const size_t max_serialized_key_length = 16;
 
-  #if FASTCDR_VERSION_MAJOR == 1
   auto ser_length = ser.getSerializedDataLength();
-#else
-  auto ser_length = ser.get_serialized_data_length();
-#endif // FASTCDR_VERSION_MAJOR == 1
 
   // check for md5
   if (force_md5 || key_max_serialized_size_ > max_serialized_key_length)
