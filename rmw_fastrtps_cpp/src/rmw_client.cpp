@@ -323,7 +323,7 @@ rmw_create_client(
     return nullptr;
   }
 
-  /// Apply resource limits QoS if the type is keyed
+  // Apply resource limits QoS if the type is keyed
   if (response_fastdds_type->m_isGetKeyDefined &&
       !participant_info->leave_middleware_default_qos)
   {
@@ -390,7 +390,7 @@ rmw_create_client(
     return nullptr;
   }
 
-  /// Apply resource limits QoS if the type is keyed
+  // Apply resource limits QoS if the type is keyed
   if (request_fastdds_type->m_isGetKeyDefined &&
       !participant_info->leave_middleware_default_qos)
   {

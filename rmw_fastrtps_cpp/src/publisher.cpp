@@ -266,7 +266,7 @@ rmw_fastrtps_cpp::create_publisher(
     return nullptr;
   }
 
-  /// Apply resource limits QoS if the type is keyed
+  // Apply resource limits QoS if the type is keyed
   if (fastdds_type->m_isGetKeyDefined &&
       !participant_info->leave_middleware_default_qos)
   {
