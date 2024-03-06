@@ -62,6 +62,59 @@ void * TypeSupport::createData()
   return new eprosima::fastcdr::FastBuffer();
 }
 
+bool TypeSupport::getKey(
+    void * data,
+    eprosima::fastrtps::rtps::InstanceHandle_t * ihandle,
+    bool force_md5)
+{
+  assert(data);
+
+  bool ret = false;
+
+  if (!m_isGetKeyDefined)
+  {
+      return ret;
+  }
+
+  auto ser_data = static_cast<SerializedData *>(data);
+
+  switch (ser_data->type)
+  {
+    case FASTRTPS_SERIALIZED_DATA_TYPE_ROS_MESSAGE:
+      {
+        ret = this->get_key_hash_from_ros_message(ser_data->data, ihandle, force_md5, ser_data->impl);
+        break;
+      }
+
+    case FASTRTPS_SERIALIZED_DATA_TYPE_CDR_BUFFER:
+      {
+        // TODO
+        // We would need a get_key_hash_from_payload method
+        break;
+      }
+
+    case FASTRTPS_SERIALIZED_DATA_TYPE_DYNAMIC_MESSAGE:
+      {
+
+        auto m_type = std::make_shared<eprosima::fastrtps::types::DynamicPubSubType>();
+
+        // Retrieves the key (ihandle) from the dynamic data stored in data->data
+        return m_type->getKey(
+          static_cast<eprosima::fastrtps::types::DynamicData *>(ser_data->data),
+          ihandle,
+          force_md5);
+
+        break;
+      }
+    default:
+      {
+        break;
+      }
+  }
+
+  return ret;
+}
+
 bool TypeSupport::serialize(
   void * data, eprosima::fastrtps::rtps::SerializedPayload_t * payload)
 {
@@ -168,15 +221,27 @@ get_type_support_introspection(
       type_supports,
       rosidl_typesupport_introspection_cpp::typesupport_identifier);
     if (nullptr == type_support) {
-      rcutils_error_string_t error_string = rcutils_get_error_string();
-      rcutils_reset_error();
-      RMW_SET_ERROR_MSG_WITH_FORMAT_STRING(
-        "Type support not from this implementation. Got:\n"
-        "    %s\n"
-        "    %s\n"
-        "while fetching it",
-        prev_error_string.str, error_string.str);
-      return nullptr;
+      type_support =
+      get_message_typesupport_handle(
+      type_supports,
+      rosidl_typesupport_introspection_c__identifier_v2);
+      if (nullptr == type_support) {
+        type_support =
+      get_message_typesupport_handle(
+      type_supports,
+      rosidl_typesupport_introspection_cpp::typesupport_identifier_v2);
+        if (nullptr == type_support) {
+          rcutils_error_string_t error_string = rcutils_get_error_string();
+          rcutils_reset_error();
+          RMW_SET_ERROR_MSG_WITH_FORMAT_STRING(
+            "Type support not from this implementation. Got:\n"
+            "    %s\n"
+            "    %s\n"
+            "while fetching it",
+            prev_error_string.str, error_string.str);
+          return nullptr;
+        }
+      }
     }
   }
 
