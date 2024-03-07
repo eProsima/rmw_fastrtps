@@ -78,38 +78,14 @@ bool TypeSupport::getKey(
 
   auto ser_data = static_cast<SerializedData *>(data);
 
-  switch (ser_data->type)
+  if (ser_data->is_cdr_buffer)
   {
-    case FASTRTPS_SERIALIZED_DATA_TYPE_ROS_MESSAGE:
-      {
-        ret = this->get_key_hash_from_ros_message(ser_data->data, ihandle, force_md5, ser_data->impl);
-        break;
-      }
-
-    case FASTRTPS_SERIALIZED_DATA_TYPE_CDR_BUFFER:
-      {
-        // TODO
-        // We would need a get_key_hash_from_payload method
-        break;
-      }
-
-    case FASTRTPS_SERIALIZED_DATA_TYPE_DYNAMIC_MESSAGE:
-      {
-
-        auto m_type = std::make_shared<eprosima::fastrtps::types::DynamicPubSubType>();
-
-        // Retrieves the key (ihandle) from the dynamic data stored in data->data
-        return m_type->getKey(
-          static_cast<eprosima::fastrtps::types::DynamicData *>(ser_data->data),
-          ihandle,
-          force_md5);
-
-        break;
-      }
-    default:
-      {
-        break;
-      }
+    // TODO
+    // We would need a get_key_hash_from_payload method
+  }
+  else
+  {
+    ret = this->get_key_hash_from_ros_message(ser_data->data, ihandle, force_md5, ser_data->impl);
   }
 
   return ret;
