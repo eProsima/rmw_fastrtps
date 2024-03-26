@@ -68,8 +68,8 @@ public:
 
   RMW_FASTRTPS_SHARED_CPP_PUBLIC
   bool compute_key(
-    const void* const data,
-    eprosima::fastdds::rtps::InstanceHandle_t& ihandle,
+    const void * const data,
+    eprosima::fastdds::rtps::InstanceHandle_t & ihandle,
     bool force_md5 = false) override;
 
   RMW_FASTRTPS_SHARED_CPP_PUBLIC
