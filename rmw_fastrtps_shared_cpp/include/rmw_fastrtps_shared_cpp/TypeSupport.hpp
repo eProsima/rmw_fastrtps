@@ -138,6 +138,7 @@ protected:
   mutable eprosima::fastdds::MD5 md5_;
   mutable std::vector<uint8_t> key_buffer_;
   const rosidl_message_type_support_t * type_supports_ {nullptr};
+  mutable std::mutex mtx_;
 };
 
 }  // namespace rmw_fastrtps_shared_cpp
