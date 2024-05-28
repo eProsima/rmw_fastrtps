@@ -138,24 +138,25 @@ create_content_filtered_topic(
   const rmw_subscription_content_filter_options_t * options,
   eprosima::fastdds::dds::ContentFilteredTopic ** content_filtered_topic)
 {
+  if (nullptr == topic_desc) {
   std::vector<std::string> expression_parameters;
   for (size_t i = 0; i < options->expression_parameters.size; ++i) {
     expression_parameters.push_back(options->expression_parameters.data[i]);
   }
+    auto topic = dynamic_cast<eprosima::fastdds::dds::Topic *>(topic_desc);
+    std::string cft_topic_name = topic_name_mangled + CONTENT_FILTERED_TOPIC_POSTFIX;
+    eprosima::fastdds::dds::ContentFilteredTopic * filtered_topic =
+      participant->create_contentfilteredtopic(
+      cft_topic_name,
+      topic,
+      options->filter_expression,
+      expression_parameters);
+    if (filtered_topic == nullptr) {
+      return false;
+    }
 
-  auto topic = dynamic_cast<eprosima::fastdds::dds::Topic *>(topic_desc);
-  std::string cft_topic_name = topic_name_mangled + CONTENT_FILTERED_TOPIC_POSTFIX;
-  eprosima::fastdds::dds::ContentFilteredTopic * filtered_topic =
-    participant->create_contentfilteredtopic(
-    cft_topic_name,
-    topic,
-    options->filter_expression,
-    expression_parameters);
-  if (filtered_topic == nullptr) {
-    return false;
+    *content_filtered_topic = filtered_topic;
   }
-
-  *content_filtered_topic = filtered_topic;
   return true;
 }
 
