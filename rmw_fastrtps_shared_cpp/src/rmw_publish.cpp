@@ -15,7 +15,7 @@
 #include "fastcdr/Cdr.h"
 #include "fastcdr/FastBuffer.h"
 
-#include "fastdds/rtps/common/Time_t.h"
+#include "fastdds/rtps/common/Time_t.hpp"
 
 #include "rmw/allocators.h"
 #include "rmw/error_handling.h"
@@ -59,8 +59,8 @@ __rmw_publish(
   data.type = FASTRTPS_SERIALIZED_DATA_TYPE_ROS_MESSAGE;
   data.data = const_cast<void *>(ros_message);
   data.impl = info->type_support_impl_;
-  eprosima::fastrtps::Time_t stamp;
-  eprosima::fastrtps::Time_t::now(stamp);
+  eprosima::fastdds::Time_t stamp;
+  eprosima::fastdds::Time_t::now(stamp);
   TRACETOOLS_TRACEPOINT(rmw_publish, publisher, ros_message, stamp.to_ns());
   if (!info->data_writer_->write_w_timestamp(&data, eprosima::fastdds::dds::HANDLE_NIL, stamp)) {
     RMW_SET_ERROR_MSG("cannot publish data");

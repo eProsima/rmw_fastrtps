@@ -22,8 +22,7 @@
 
 #include "fastdds/dds/subscriber/SampleInfo.hpp"
 #include "fastdds/dds/core/StackAllocatedSequence.hpp"
-
-#include "fastrtps/utils/collections/ResourceLimitedVector.hpp"
+#include "fastdds/utils/collections/ResourceLimitedVector.hpp"
 
 #include "fastcdr/Cdr.h"
 #include "fastcdr/FastBuffer.h"

@@ -16,7 +16,7 @@
 
 #include "fastcdr/Cdr.h"
 
-#include "fastdds/rtps/common/WriteParams.h"
+#include "fastdds/rtps/common/WriteParams.hpp"
 #include "fastdds/dds/core/StackAllocatedSequence.hpp"
 
 #include "rmw/error_handling.h"
