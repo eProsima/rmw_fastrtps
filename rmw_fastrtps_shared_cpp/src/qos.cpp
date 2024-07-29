@@ -39,7 +39,7 @@ is_rmw_duration_unspecified(const rmw_time_t & time)
 }
 
 rmw_time_t
-dds_duration_to_rmw(const eprosima::fastdds::Duration_t & duration)
+dds_duration_to_rmw(const eprosima::fastdds::dds::Duration_t & duration)
 {
   if (duration == eprosima::fastdds::rtps::c_RTPSTimeInfinite) {
     return RMW_DURATION_INFINITE;
@@ -143,7 +143,7 @@ bool fill_entity_qos_from_profile(
     //   a8691a40be6b8460b01edde36ad8563170a3a35a/include/fastrtps/qos/QosPolicies.h#L223-L232
     double period_in_ns = entity_qos.liveliness().lease_duration.to_ns() * 2.0 / 3.0;
     double period_in_s = RCUTILS_NS_TO_S(period_in_ns);
-    entity_qos.liveliness().announcement_period = eprosima::fastdds::Duration_t(period_in_s);
+    entity_qos.liveliness().announcement_period = eprosima::fastdds::dds::Duration_t(period_in_s);
   }
 
   return true;

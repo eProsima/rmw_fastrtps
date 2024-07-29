@@ -116,21 +116,21 @@ public:
     return is_plain_ && rep == eprosima::fastdds::dds::XCDR_DATA_REPRESENTATION;
   }
 
+  RMW_FASTDDS_SHARED_CPP_PUBLIC void register_type_object_representation() override;
+
   RMW_FASTDDS_SHARED_CPP_PUBLIC
   virtual ~TypeSupport() {}
 
 protected:
   RMW_FASTDDS_SHARED_CPP_PUBLIC
-  TypeSupport();
+  TypeSupport(
+    const rosidl_message_type_support_t * type_supports
+  );
 
-  bool max_size_bound_;
-  bool is_plain_;
+  bool max_size_bound_ {false};
+  bool is_plain_ {false};
+  const rosidl_message_type_support_t * type_supports_ {nullptr};
 };
-
-RMW_FASTDDS_SHARED_CPP_PUBLIC
-bool register_type_object(
-  const rosidl_message_type_support_t * type_supports,
-  const std::string & type_name);
 
 }  // namespace rmw_fastrtps_shared_cpp
 
