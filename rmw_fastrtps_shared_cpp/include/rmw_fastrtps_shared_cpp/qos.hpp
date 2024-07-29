@@ -55,7 +55,7 @@ get_topic_qos(
 
 RMW_FASTDDS_SHARED_CPP_PUBLIC
 rmw_time_t
-dds_duration_to_rmw(const eprosima::fastdds::Duration_t & duration);
+dds_duration_to_rmw(const eprosima::fastdds::dds::Duration_t & duration);
 
 /*
  * Converts the DDS QOS Policy; of type DataWriterQos or DataReaderQos into rmw_qos_profile_t.

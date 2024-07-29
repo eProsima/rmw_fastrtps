@@ -56,7 +56,7 @@ copy_from_fastdds_guid_to_byte_array(
   memcpy(&guid_byte_array[prefix_size], &guid.entityId, guid.entityId.size);
 }
 
-struct hash_fastdds
+struct hash_fastdds_guid
 {
   std::size_t operator()(const eprosima::fastdds::rtps::GUID_t & guid) const
   {

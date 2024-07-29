@@ -82,11 +82,11 @@ class ServicePubListener : public eprosima::fastdds::dds::DataWriterListener
 {
   using subscriptions_set_t =
     std::unordered_set<eprosima::fastdds::rtps::GUID_t,
-      rmw_fastrtps_shared_cpp::hash_fastrtps_guid>;
+      rmw_fastrtps_shared_cpp::hash_fastdds_guid>;
   using clients_endpoints_map_t =
     std::unordered_map<eprosima::fastdds::rtps::GUID_t,
       eprosima::fastdds::rtps::GUID_t,
-      rmw_fastrtps_shared_cpp::hash_fastrtps_guid>;
+      rmw_fastrtps_shared_cpp::hash_fastdds_guid>;
 
 public:
   explicit ServicePubListener(

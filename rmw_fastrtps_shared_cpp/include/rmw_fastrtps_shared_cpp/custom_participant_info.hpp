@@ -141,15 +141,17 @@ public:
   {}
 
   void on_participant_discovery(
-    eprosima::fastdds::dds::DomainParticipant *,
-    eprosima::fastdds::rtps::ParticipantDiscoveryInfo && info,
+    eprosima::fastdds::dds::DomainParticipant * participant,
+    eprosima::fastdds::rtps::ParticipantDiscoveryStatus reason,
+    const eprosima::fastdds::dds::ParticipantBuiltinTopicData & info,
     bool & should_be_ignored) override
   {
+    static_cast<void>(participant);
     should_be_ignored = false;
-    switch (info.status) {
-      case eprosima::fastdds::rtps::ParticipantDiscoveryInfo::DISCOVERED_PARTICIPANT:
+    switch (reason) {
+      case eprosima::fastdds::rtps::ParticipantDiscoveryStatus::DISCOVERED_PARTICIPANT:
         {
-          auto map = rmw::impl::cpp::parse_key_value(info.info.m_userData);
+          auto map = rmw::impl::cpp::parse_key_value(info.user_data);
           auto name_found = map.find("enclave");
 
           if (name_found == map.end()) {
@@ -160,16 +162,16 @@ public:
 
           context->graph_cache.add_participant(
             rmw_fastrtps_shared_cpp::create_rmw_gid(
-              identifier_, info.info.m_guid),
+              identifier_, info.guid),
             enclave);
           break;
         }
-      case eprosima::fastdds::rtps::ParticipantDiscoveryInfo::REMOVED_PARTICIPANT:
+      case eprosima::fastdds::rtps::ParticipantDiscoveryStatus::REMOVED_PARTICIPANT:
       // fall through
-      case eprosima::fastdds::rtps::ParticipantDiscoveryInfo::DROPPED_PARTICIPANT:
+      case eprosima::fastdds::rtps::ParticipantDiscoveryStatus::DROPPED_PARTICIPANT:
         context->graph_cache.remove_participant(
           rmw_fastrtps_shared_cpp::create_rmw_gid(
-            identifier_, info.info.m_guid));
+            identifier_, info.guid));
         break;
       default:
         return;
