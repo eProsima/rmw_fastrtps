@@ -18,19 +18,18 @@
 #include <utility>
 #include <vector>
 
-#include "fastdds/rtps/common/SerializedPayload.h"
+#include "fastdds/rtps/common/SerializedPayload.hpp"
+#include "fastdds/utils/md5.hpp"
 
 #include "fastcdr/FastBuffer.h"
 #include "fastcdr/Cdr.h"
 
-#include "fastrtps/rtps/common/SerializedPayload.h"
-#include "fastrtps/utils/md5.h"
-#include "fastrtps/types/DynamicData.h"
-#include "fastrtps/types/DynamicPubSubType.h"
-#include "fastrtps/types/TypesBase.h"
-#include "fastrtps/types/TypeObjectFactory.h"
-#include "fastrtps/types/TypeNamesGenerator.h"
-#include "fastrtps/types/AnnotationParameterValue.h"
+#include "fastdds/dds/domain/DomainParticipantFactory.hpp"
+#include "fastdds/dds/xtypes/dynamic_types/DynamicData.hpp"
+#include "fastdds/dds/xtypes/dynamic_types/DynamicPubSubType.hpp"
+#include "fastdds/dds/xtypes/type_representation/ITypeObjectRegistry.hpp"
+#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
+#include <fastdds/dds/xtypes/type_representation/TypeObjectUtils.hpp>
 
 #include "rmw_fastrtps_shared_cpp/TypeSupport.hpp"
 #include "rmw/error_handling.h"
@@ -46,70 +45,73 @@ namespace rmw_fastrtps_shared_cpp
 
 TypeSupport::TypeSupport()
 {
-  m_isGetKeyDefined = false;
+  is_compute_key_provided = false;
   max_size_bound_ = false;
   is_plain_ = false;
-  auto_fill_type_object(false);
   auto_fill_type_information(false);
 }
 
-void TypeSupport::deleteData(void * data)
+void TypeSupport::delete_data(void * data)
 {
   assert(data);
   delete static_cast<eprosima::fastcdr::FastBuffer *>(data);
 }
 
-void * TypeSupport::createData()
+void * TypeSupport::create_data()
 {
   return new eprosima::fastcdr::FastBuffer();
 }
 
 bool TypeSupport::serialize(
-  void * data, eprosima::fastrtps::rtps::SerializedPayload_t * payload)
+  const void * const data, eprosima::fastdds::rtps::SerializedPayload_t & payload,
+  eprosima::fastdds::dds::DataRepresentationId_t data_representation)
 {
   assert(data);
-  assert(payload);
+  static_cast<void>(data_representation);
 
-  auto ser_data = static_cast<SerializedData *>(data);
+  auto ser_data = static_cast<const SerializedData * const>(data);
 
   switch (ser_data->type) {
-    case FASTRTPS_SERIALIZED_DATA_TYPE_ROS_MESSAGE:
+    case FASTDDS_SERIALIZED_DATA_TYPE_ROS_MESSAGE:
       {
         eprosima::fastcdr::FastBuffer fastbuffer(  // Object that manages the raw buffer
-          reinterpret_cast<char *>(payload->data), payload->max_size);
+          reinterpret_cast<char *>(payload.data), payload.max_size);
         eprosima::fastcdr::Cdr ser(  // Object that serializes the data
           fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
           eprosima::fastcdr::CdrVersion::XCDRv1);
         ser.set_encoding_flag(eprosima::fastcdr::EncodingAlgorithmFlag::PLAIN_CDR);
         if (this->serializeROSmessage(ser_data->data, ser, ser_data->impl)) {
-          payload->encapsulation = ser.endianness() ==
+          payload.encapsulation = ser.endianness() ==
             eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
-          payload->length = (uint32_t)ser.get_serialized_data_length();
+          payload.length = (uint32_t)ser.get_serialized_data_length();
           return true;
         }
         break;
       }
 
-    case FASTRTPS_SERIALIZED_DATA_TYPE_CDR_BUFFER:
+    case FASTDDS_SERIALIZED_DATA_TYPE_CDR_BUFFER:
       {
         auto ser = static_cast<eprosima::fastcdr::Cdr *>(ser_data->data);
-        if (payload->max_size >= ser->get_serialized_data_length()) {
-          payload->length = static_cast<uint32_t>(ser->get_serialized_data_length());
-          payload->encapsulation = ser->endianness() ==
+        if (payload.max_size >= ser->get_serialized_data_length()) {
+          payload.length = static_cast<uint32_t>(ser->get_serialized_data_length());
+          payload.encapsulation = ser->endianness() ==
             eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
-          memcpy(payload->data, ser->get_buffer_pointer(), ser->get_serialized_data_length());
+          memcpy(payload.data, ser->get_buffer_pointer(), ser->get_serialized_data_length());
           return true;
         }
         break;
       }
 
-    case FASTRTPS_SERIALIZED_DATA_TYPE_DYNAMIC_MESSAGE:
+    case FASTDDS_SERIALIZED_DATA_TYPE_DYNAMIC_MESSAGE:
       {
-        auto m_type = std::make_shared<eprosima::fastrtps::types::DynamicPubSubType>();
+        auto m_type = std::make_shared<eprosima::fastdds::dds::DynamicPubSubType>();
+        eprosima::fastdds::dds::DynamicData::_ref_type * dyn_data {static_cast<eprosima::fastdds::
+            dds
+            ::DynamicData::_ref_type *>(ser_data->data)};
 
         // Serializes payload into dynamic data stored in data->data
         return m_type->serialize(
-          static_cast<eprosima::fastrtps::types::DynamicData *>(ser_data->data), payload
+          dyn_data, payload, data_representation
         );
       }
 
@@ -120,42 +122,42 @@ bool TypeSupport::serialize(
 }
 
 bool TypeSupport::deserialize(
-  eprosima::fastrtps::rtps::SerializedPayload_t * payload,
+  eprosima::fastdds::rtps::SerializedPayload_t & payload,
   void * data)
 {
   assert(data);
-  assert(payload);
 
   auto ser_data = static_cast<SerializedData *>(data);
 
   switch (ser_data->type) {
-    case FASTRTPS_SERIALIZED_DATA_TYPE_ROS_MESSAGE:
+    case FASTDDS_SERIALIZED_DATA_TYPE_ROS_MESSAGE:
       {
         eprosima::fastcdr::FastBuffer fastbuffer(
-          reinterpret_cast<char *>(payload->data), payload->length);
+          reinterpret_cast<char *>(payload.data), payload.length);
         eprosima::fastcdr::Cdr deser(
           fastbuffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN);
         return deserializeROSmessage(deser, ser_data->data, ser_data->impl);
       }
 
-    case FASTRTPS_SERIALIZED_DATA_TYPE_CDR_BUFFER:
+    case FASTDDS_SERIALIZED_DATA_TYPE_CDR_BUFFER:
       {
         auto buffer = static_cast<eprosima::fastcdr::FastBuffer *>(ser_data->data);
-        if (!buffer->reserve(payload->length)) {
+        if (!buffer->reserve(payload.length)) {
           return false;
         }
-        memcpy(buffer->getBuffer(), payload->data, payload->length);
+        memcpy(buffer->getBuffer(), payload.data, payload.length);
         return true;
       }
 
-    case FASTRTPS_SERIALIZED_DATA_TYPE_DYNAMIC_MESSAGE:
+    case FASTDDS_SERIALIZED_DATA_TYPE_DYNAMIC_MESSAGE:
       {
-        auto m_type = std::make_shared<eprosima::fastrtps::types::DynamicPubSubType>();
+        auto m_type = std::make_shared<eprosima::fastdds::dds::DynamicPubSubType>();
+        eprosima::fastdds::dds::DynamicData::_ref_type * dyn_data {static_cast<eprosima::fastdds::
+            dds
+            ::DynamicData::_ref_type *>(ser_data->data)};
 
         // Deserializes payload into dynamic data stored in data->data (copies!)
-        return m_type->deserialize(
-          payload, static_cast<eprosima::fastrtps::types::DynamicData *>(ser_data->data)
-        );
+        return m_type->deserialize(payload, dyn_data);
       }
 
     default:
@@ -164,33 +166,41 @@ bool TypeSupport::deserialize(
   return false;
 }
 
-std::function<uint32_t()> TypeSupport::getSerializedSizeProvider(void * data)
+uint32_t TypeSupport::calculate_serialized_size(
+  const void * const data,
+  eprosima::fastdds::dds::DataRepresentationId_t data_representation)
 {
   assert(data);
+  static_cast<void>(data_representation);
 
-  auto ser_data = static_cast<SerializedData *>(data);
-  auto ser_size = [this, ser_data]() -> uint32_t
-    {
-      if (ser_data->type == FASTRTPS_SERIALIZED_DATA_TYPE_CDR_BUFFER) {
-        auto ser = static_cast<eprosima::fastcdr::Cdr *>(ser_data->data);
-        return static_cast<uint32_t>(ser->get_serialized_data_length());
-      }
-      return static_cast<uint32_t>(
-        this->getEstimatedSerializedSize(ser_data->data, ser_data->impl));
-    };
+  auto ser_data = static_cast<const SerializedData * const>(data);
+  uint32_t ser_size {0};
+  if (ser_data->type == FASTDDS_SERIALIZED_DATA_TYPE_CDR_BUFFER) {
+    auto ser = static_cast<eprosima::fastcdr::Cdr *>(ser_data->data);
+    ser_size = ser->get_serialized_data_length();
+  } else {
+    ser_size = this->getEstimatedSerializedSize(ser_data->data, ser_data->impl);
+  }
   return ser_size;
 }
 
 // TODO(iuhilnehc-ynos): add the following content into new files named TypeObject?
-using CompleteStructType = eprosima::fastrtps::types::CompleteStructType;
-using CompleteStructMember = eprosima::fastrtps::types::CompleteStructMember;
-using MinimalStructType = eprosima::fastrtps::types::MinimalStructType;
-using MinimalStructMember = eprosima::fastrtps::types::MinimalStructMember;
-using SerializedPayload_t = eprosima::fastrtps::rtps::SerializedPayload_t;
-using TypeNamesGenerator = eprosima::fastrtps::types::TypeNamesGenerator;
-using TypeIdentifier = eprosima::fastrtps::types::TypeIdentifier;
-using TypeObject = eprosima::fastrtps::types::TypeObject;
-using TypeObjectFactory = eprosima::fastrtps::types::TypeObjectFactory;
+using CommonStructMember = eprosima::fastdds::dds::xtypes::CommonStructMember;
+using CompleteStructHeader = eprosima::fastdds::dds::xtypes::CompleteStructHeader;
+using CompleteStructMember = eprosima::fastdds::dds::xtypes::CompleteStructMember;
+using CompleteStructMemberSeq = eprosima::fastdds::dds::xtypes::CompleteStructMemberSeq;
+using CompleteStructType = eprosima::fastdds::dds::xtypes::CompleteStructType;
+using CompleteTypeDetail = eprosima::fastdds::dds::xtypes::CompleteTypeDetail;
+using ITypeObjectRegistry = eprosima::fastdds::dds::xtypes::ITypeObjectRegistry;
+using MemberId = eprosima::fastdds::dds::xtypes::MemberId;
+using MinimalStructType = eprosima::fastdds::dds::xtypes::MinimalStructType;
+using MinimalStructMember = eprosima::fastdds::dds::xtypes::MinimalStructMember;
+using SerializedPayload_t = eprosima::fastdds::rtps::SerializedPayload_t;
+using StructMemberFlag = eprosima::fastdds::dds::xtypes::StructMemberFlag;
+using StructTypeFlag = eprosima::fastdds::dds::xtypes::StructTypeFlag;
+using TypeIdentifier = eprosima::fastdds::dds::xtypes::TypeIdentifier;
+using TypeObject = eprosima::fastdds::dds::xtypes::TypeObject;
+using TypeObjectUtils = eprosima::fastdds::dds::xtypes::TypeObjectUtils;
 
 const rosidl_message_type_support_t *
 get_type_support_introspection(const rosidl_message_type_support_t * type_supports)
@@ -246,28 +256,57 @@ template<typename MembersType>
 MemberIdentifierName GetTypeIdentifier(const MembersType * member, uint32_t index, bool complete);
 
 template<typename MembersType>
-const TypeObject * GetCompleteObject(
+TypeObject GetCompleteObject(
   const std::string & type_name,
   const MembersType * members)
 {
-  const TypeObject * c_type_object =
-    TypeObjectFactory::get_instance()->get_type_object(type_name, true);
-  if (c_type_object != nullptr && c_type_object->_d() == eprosima::fastrtps::types::EK_COMPLETE) {
-    return c_type_object;
+
+  eprosima::fastdds::dds::xtypes::TypeObjectPair type_objects;
+  if (eprosima::fastdds::dds::RETCODE_OK ==
+    eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().
+    get_type_objects(type_name, type_objects))
+  {
+    return type_objects.complete_type_object;
   }
 
-  TypeObject * type_object = new TypeObject();
-
-  type_object->_d(eprosima::fastrtps::types::EK_COMPLETE);
-  type_object->complete()._d(eprosima::fastrtps::types::TK_STRUCTURE);
-  type_object->complete().struct_type().struct_flags().IS_FINAL(false);
-  type_object->complete().struct_type().struct_flags().IS_APPENDABLE(false);
-  type_object->complete().struct_type().struct_flags().IS_MUTABLE(false);
-  // Not sure whether current type is nested or not, make all Type Nested
-  type_object->complete().struct_type().struct_flags().IS_NESTED(true);
-  type_object->complete().struct_type().struct_flags().IS_AUTOID_HASH(false);  // Unsupported
+  StructTypeFlag struct_flags {TypeObjectUtils::build_struct_type_flag(
+      eprosima::fastdds::dds::xtypes::ExtensibilityKind::FINAL,
+      false, false)};
+  CompleteTypeDetail detail {TypeObjectUtils::build_complete_type_detail({}, {}, type_name)};
+  CompleteStructHeader header {TypeObjectUtils::build_complete_struct_header({}, detail)};
+  CompleteStructMemberSeq member_seq_ShortStruct;
 
   for (uint32_t i = 0; i < members->member_count_; ++i) {
+    MemberIdentifierName pair = GetTypeIdentifier(members, i, true);
+    if (!pair.first) {
+      continue;
+    }
+
+    StructMemberFlag member_flags_var_short = TypeObjectUtils::build_struct_member_flag(
+      eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
+      false, false, false, false);
+    MemberId member_id_var_short = static_cast<MemberId>(i);
+    bool common_var_short_ec {false};
+    CommonStructMember common_var_short {TypeObjectUtils::build_common_struct_member(
+        member_id_var_short, member_flags_var_short, TypeObjectUtils::retrieve_complete_type_identifier(
+          type_ids_var_short,
+          common_var_short_ec))};
+    if (!common_var_short_ec) {
+      EPROSIMA_LOG_ERROR(
+        XTYPES_TYPE_REPRESENTATION,
+        "Structure var_short member TypeIdentifier inconsistent.");
+      return;
+    }
+    MemberName name_var_short = "var_short";
+    eprosima::fastcdr::optional<AppliedBuiltinMemberAnnotations> member_ann_builtin_var_short;
+    ann_custom_ShortStruct.reset();
+    CompleteMemberDetail detail_var_short = TypeObjectUtils::build_complete_member_detail(
+      name_var_short, member_ann_builtin_var_short, ann_custom_ShortStruct);
+    CompleteStructMember member_var_short = TypeObjectUtils::build_complete_struct_member(
+      common_var_short, detail_var_short);
+    TypeObjectUtils::add_complete_struct_member(member_seq_ShortStruct, member_var_short);
+
+
     CompleteStructMember cst_field;
     cst_field.common().member_id(i);
     cst_field.common().member_flags().TRY_CONSTRUCT1(false);  // Unsupported
@@ -278,12 +317,6 @@ const TypeObject * GetCompleteObject(
     cst_field.common().member_flags().IS_KEY(false);
     cst_field.common().member_flags().IS_DEFAULT(false);  // Doesn't apply
 
-    MemberIdentifierName pair = GetTypeIdentifier(members, i, true);
-    if (!pair.first) {
-      continue;
-    }
-    cst_field.common().member_type_id(*pair.first);
-    cst_field.detail().name(pair.second);
     type_object->complete().struct_type().member_seq().emplace_back(cst_field);
   }
 

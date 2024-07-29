@@ -17,7 +17,7 @@
 #include "fastcdr/Cdr.h"
 #include "fastcdr/FastBuffer.h"
 
-#include "fastdds/rtps/common/WriteParams.h"
+#include "fastdds/rtps/common/WriteParams.hpp"
 #include "fastdds/dds/core/StackAllocatedSequence.hpp"
 
 #include "rmw/error_handling.h"
@@ -53,7 +53,7 @@ __rmw_send_request(
   auto info = static_cast<CustomClientInfo *>(client->data);
   assert(info);
 
-  eprosima::fastrtps::rtps::WriteParams wparams;
+  eprosima::fastdds::rtps::WriteParams wparams;
   rmw_fastrtps_shared_cpp::SerializedData data;
   data.type = FASTRTPS_SERIALIZED_DATA_TYPE_ROS_MESSAGE;
   data.data = const_cast<void *>(ros_request);
