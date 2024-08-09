@@ -309,7 +309,8 @@ rmw_fastrtps_dynamic_cpp::create_publisher(
       rmw_publisher_free(rmw_publisher);
     });
 
-  rmw_publisher->can_loan_messages = info->type_support_->is_plain();
+  // The type support in the RMW implementation is always XCDR1.
+  rmw_publisher->can_loan_messages = info->type_support_->is_plain(eprosima::fastdds::dds::XCDR_DATA_REPRESENTATION);
   rmw_publisher->implementation_identifier = eprosima_fastrtps_identifier;
   rmw_publisher->data = info;
 

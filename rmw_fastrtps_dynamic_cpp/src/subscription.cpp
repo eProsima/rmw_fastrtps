@@ -202,7 +202,7 @@ create_subscription(
     fastdds_type.reset(tsupport);
   }
 
-  if (keyed && !fastdds_type->m_isGetKeyDefined) {
+  if (keyed && !fastdds_type->is_compute_key_provided) {
     RMW_SET_ERROR_MSG("create_subscription() requested a keyed topic with a non-keyed type");
     return nullptr;
   }
