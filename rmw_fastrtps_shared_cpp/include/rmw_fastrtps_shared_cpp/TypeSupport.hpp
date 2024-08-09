@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RMW_FASTDDS_SHARED_CPP__TYPESUPPORT_HPP_
-#define RMW_FASTDDS_SHARED_CPP__TYPESUPPORT_HPP_
+#ifndef RMW_FASTRTPS_SHARED_CPP__TYPESUPPORT_HPP_
+#define RMW_FASTRTPS_SHARED_CPP__TYPESUPPORT_HPP_
 
 #include <cassert>
 #include <string>
@@ -134,4 +134,4 @@ protected:
 
 }  // namespace rmw_fastrtps_shared_cpp
 
-#endif  // RMW_FASTDDS_SHARED_CPP__TYPESUPPORT_HPP_
+#endif  // RMW_FASTRTPS_SHARED_CPP__TYPESUPPORT_HPP_
