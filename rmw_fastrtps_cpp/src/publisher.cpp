@@ -23,7 +23,7 @@
 #include "fastdds/dds/topic/Topic.hpp"
 #include "fastdds/dds/topic/TopicDescription.hpp"
 #include "fastdds/dds/topic/qos/TopicQos.hpp"
-#include "fastdds/rtps/resources/ResourceManagement.h"
+#include "fastdds/rtps/attributes/ResourceManagement.hpp"
 
 #include "rcutils/error_handling.h"
 #include "rcutils/macros.h"
