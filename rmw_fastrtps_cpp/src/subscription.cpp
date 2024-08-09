@@ -189,7 +189,7 @@ __create_dynamic_subscription(
       ts_impl->dynamic_message_type->impl.handle));
 
   // Check if we need to split the name into namespace and type name
-  std::string type_name = dyn_type_ptr->get_name();
+  std::string type_name = dyn_type_ptr->get_name().to_string();
 
   int occurrences = 0;
   std::string::size_type pos = 0;
@@ -286,11 +286,11 @@ __create_dynamic_subscription(
     }
 
     // Because we're using TypeSupport_cpp, we need to do this
-    tsupport->setName(type_name.c_str());
+    tsupport->set_name(type_name.c_str());
     fastdds_type.reset(tsupport);
   }
 
-  if (keyed && !fastdds_type->m_isGetKeyDefined) {
+  if (keyed && !fastdds_type->is_compute_key_provided) {
     RMW_SET_ERROR_MSG("create_subscription() requested a keyed topic with a non-keyed type");
     return nullptr;
   }
@@ -558,7 +558,7 @@ __create_subscription(
     fastdds_type.reset(tsupport);
   }
 
-  if (keyed && !fastdds_type->m_isGetKeyDefined) {
+  if (keyed && !fastdds_type->is_compute_key_provided) {
     RMW_SET_ERROR_MSG("create_subscription() requested a keyed topic with a non-keyed type");
     return nullptr;
   }

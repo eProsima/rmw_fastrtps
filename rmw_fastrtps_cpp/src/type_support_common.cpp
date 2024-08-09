@@ -27,7 +27,7 @@ TypeSupport::TypeSupport(
   const rosidl_message_type_support_t * type_supports
 ) : rmw_fastrtps_shared_cpp::TypeSupport(type_supports)
 {
-  m_isGetKeyDefined = false;
+  is_compute_key_provided = false;
   max_size_bound_ = false;
   is_plain_ = false;
 }
@@ -56,15 +56,15 @@ void TypeSupport::set_members(const message_type_support_callbacks_t * members)
   }
 
   // Total size is encapsulation size + data size
-  m_typeSize = 4 + data_size;
+  max_serialized_type_size = 4 + data_size;
   // Account for RTPS submessage alignment
-  m_typeSize = (m_typeSize + 3) & ~3;
+  max_serialized_type_size = (max_serialized_type_size + 3) & ~3;
 }
 
 size_t TypeSupport::getEstimatedSerializedSize(const void * ros_message, const void * impl) const
 {
   if (is_plain_) {
-    return m_typeSize;
+    return max_serialized_type_size;
   }
 
   assert(ros_message);
@@ -119,12 +119,12 @@ bool TypeSupport::deserializeROSmessage(
   } catch (const eprosima::fastcdr::exception::Exception &) {
     RMW_SET_ERROR_MSG_WITH_FORMAT_STRING(
       "Fast CDR exception deserializing message of type %s.",
-      getName());
+      get_name().c_str());
     return false;
   } catch (const std::bad_alloc &) {
     RMW_SET_ERROR_MSG_WITH_FORMAT_STRING(
       "'Bad alloc' exception deserializing message of type %s.",
-      getName());
+      get_name().c_str());
     return false;
   }
 
@@ -139,7 +139,7 @@ MessageTypeSupport::MessageTypeSupport(
   assert(members);
 
   std::string name = _create_type_name(members);
-  this->setName(name.c_str());
+  this->set_name(name.c_str());
 
   set_members(members);
 }
@@ -159,7 +159,7 @@ RequestTypeSupport::RequestTypeSupport(
   auto msg = static_cast<const message_type_support_callbacks_t *>(
     members->request_members_->data);
   std::string name = _create_type_name(msg);  // + "Request_";
-  this->setName(name.c_str());
+  this->set_name(name.c_str());
 
   set_members(msg);
 }
@@ -174,7 +174,7 @@ ResponseTypeSupport::ResponseTypeSupport(
   auto msg = static_cast<const message_type_support_callbacks_t *>(
     members->response_members_->data);
   std::string name = _create_type_name(msg);  // + "Response_";
-  this->setName(name.c_str());
+  this->set_name(name.c_str());
 
   set_members(msg);
 }
