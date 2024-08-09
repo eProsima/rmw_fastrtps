@@ -60,7 +60,7 @@ _assign_message_info(
   sender_gid->implementation_identifier = identifier;
   memset(sender_gid->data, 0, RMW_GID_STORAGE_SIZE);
 
-  rmw_fastrtps_shared_cpp::copy_from_fastrtps_guid_to_byte_array(
+  rmw_fastrtps_shared_cpp::copy_from_fastdds_guid_to_byte_array(
     sinfo->sample_identity.writer_guid(),
     sender_gid->data);
 }
@@ -86,7 +86,7 @@ _take(
   RCUTILS_CHECK_FOR_NULL_WITH_MSG(info, "custom subscriber info is null", return RMW_RET_ERROR);
 
   rmw_fastrtps_shared_cpp::SerializedData data;
-  data.type = FASTRTPS_SERIALIZED_DATA_TYPE_ROS_MESSAGE;
+  data.type = FASTDDS_SERIALIZED_DATA_TYPE_ROS_MESSAGE;
   data.data = ros_message;
   data.impl = info->type_support_impl_;
 
@@ -107,7 +107,7 @@ _take(
 
     if (subscription->options.ignore_local_publications) {
       auto sample_writer_guid =
-        eprosima::fastrtps::rtps::iHandle2GUID(info_seq[0].publication_handle);
+        eprosima::fastdds::rtps::iHandle2GUID(info_seq[0].publication_handle);
 
       if (sample_writer_guid.guidPrefix == info->data_reader_->guid().guidPrefix) {
         // This is a local publication. Ignore it
@@ -313,9 +313,9 @@ _take_serialized_message(
   eprosima::fastcdr::FastBuffer buffer;
 
   rmw_fastrtps_shared_cpp::SerializedData data;
-  data.type = FASTRTPS_SERIALIZED_DATA_TYPE_CDR_BUFFER;
+  data.type = FASTDDS_SERIALIZED_DATA_TYPE_CDR_BUFFER;
   data.data = &buffer;
-  data.impl = nullptr;  // not used when type is FASTRTPS_SERIALIZED_DATA_TYPE_CDR_BUFFER
+  data.impl = nullptr;  // not used when type is FASTDDS_SERIALIZED_DATA_TYPE_CDR_BUFFER
 
   eprosima::fastdds::dds::StackAllocatedSequence<void *, 1> data_values;
   const_cast<void **>(data_values.buffer())[0] = &data;
@@ -425,9 +425,9 @@ _take_dynamic_message(
   eprosima::fastcdr::FastBuffer buffer;
 
   rmw_fastrtps_shared_cpp::SerializedData data;
-  data.type = FASTRTPS_SERIALIZED_DATA_TYPE_DYNAMIC_MESSAGE;
+  data.type = FASTDDS_SERIALIZED_DATA_TYPE_DYNAMIC_MESSAGE;
   data.data = dynamic_data->impl.handle;
-  data.impl = nullptr;  // not used when type is FASTRTPS_SERIALIZED_DATA_TYPE_DYNAMIC_MESSAGE
+  data.impl = nullptr;  // not used when type is FASTDDS_SERIALIZED_DATA_TYPE_DYNAMIC_MESSAGE
 
   eprosima::fastdds::dds::StackAllocatedSequence<void *, 1> data_values;
   const_cast<void **>(data_values.buffer())[0] = &data;
@@ -525,7 +525,7 @@ struct LoanManager
   };
 
   explicit LoanManager(
-    const eprosima::fastrtps::ResourceLimitedContainerConfig & items_cfg)
+    const eprosima::fastdds::ResourceLimitedContainerConfig & items_cfg)
   : items(items_cfg)
   {
   }
@@ -556,7 +556,7 @@ struct LoanManager
 
 private:
   std::mutex mtx;
-  using ItemVector = eprosima::fastrtps::ResourceLimitedVector<std::unique_ptr<Item>>;
+  using ItemVector = eprosima::fastdds::ResourceLimitedVector<std::unique_ptr<Item>>;
   ItemVector items RCPPUTILS_TSA_GUARDED_BY(mtx);
 };
 

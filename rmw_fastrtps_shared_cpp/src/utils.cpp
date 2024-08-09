@@ -146,7 +146,7 @@ create_datareader(
     case RMW_UNIQUE_NETWORK_FLOW_ENDPOINTS_OPTIONALLY_REQUIRED:
     case RMW_UNIQUE_NETWORK_FLOW_ENDPOINTS_STRICTLY_REQUIRED:
       // Ensure we request unique network flow endpoints
-      using PropertyPolicyHelper = eprosima::fastrtps::rtps::PropertyPolicyHelper;
+      using PropertyPolicyHelper = eprosima::fastdds::rtps::PropertyPolicyHelper;
       if (nullptr ==
         PropertyPolicyHelper::find_property(
           updated_qos.properties(),

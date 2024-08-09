@@ -58,9 +58,9 @@ __rmw_take_response(
   // Todo(sloretz) eliminate heap allocation pending eprosima/Fast-CDR#19
   response.buffer_.reset(new eprosima::fastcdr::FastBuffer());
   rmw_fastrtps_shared_cpp::SerializedData data;
-  data.type = FASTRTPS_SERIALIZED_DATA_TYPE_CDR_BUFFER;
+  data.type = FASTDDS_SERIALIZED_DATA_TYPE_CDR_BUFFER;
   data.data = response.buffer_.get();
-  data.impl = nullptr;  // not used when type is FASTRTPS_SERIALIZED_DATA_TYPE_CDR_BUFFER
+  data.impl = nullptr;  // not used when type is FASTDDS_SERIALIZED_DATA_TYPE_CDR_BUFFER
 
   eprosima::fastdds::dds::StackAllocatedSequence<void *, 1> data_values;
   const_cast<void **>(data_values.buffer())[0] = &data;
@@ -116,8 +116,8 @@ __rmw_send_response(
   auto info = static_cast<CustomServiceInfo *>(service->data);
   assert(info);
 
-  eprosima::fastrtps::rtps::WriteParams wparams;
-  rmw_fastrtps_shared_cpp::copy_from_byte_array_to_fastrtps_guid(
+  eprosima::fastdds::rtps::WriteParams wparams;
+  rmw_fastrtps_shared_cpp::copy_from_byte_array_to_fastdds_guid(
     request_header->writer_guid,
     &wparams.related_sample_identity().writer_guid());
   wparams.related_sample_identity().sequence_number().high =
@@ -135,7 +135,7 @@ __rmw_send_response(
   // readers will have this bit on, while writers will not. We use this to know
   // if the related guid is the request writer or the response reader.
   constexpr uint8_t entity_id_is_reader_bit = 0x04;
-  const eprosima::fastrtps::rtps::GUID_t & related_guid =
+  const eprosima::fastdds::rtps::GUID_t & related_guid =
     wparams.related_sample_identity().writer_guid();
   if ((related_guid.entityId.value[3] & entity_id_is_reader_bit) != 0) {
     // Related guid is a reader, so it is the response subscription guid.
@@ -156,7 +156,7 @@ __rmw_send_response(
   }
 
   rmw_fastrtps_shared_cpp::SerializedData data;
-  data.type = FASTRTPS_SERIALIZED_DATA_TYPE_ROS_MESSAGE;
+  data.type = FASTDDS_SERIALIZED_DATA_TYPE_ROS_MESSAGE;
   data.data = const_cast<void *>(ros_response);
   data.impl = info->response_type_support_impl_;
   if (info->response_writer_->write(&data, wparams)) {
