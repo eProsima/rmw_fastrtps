@@ -215,7 +215,7 @@ rmw_create_service(
   info->response_type_support_impl_ = response_members;
 
   if (!request_fastdds_type) {
-    auto tsupport = new (std::nothrow) RequestTypeSupport_cpp(service_members);
+    auto tsupport = new (std::nothrow) RequestTypeSupport_cpp(service_members, type_supports->request_typesupport);
     if (!tsupport) {
       RMW_SET_ERROR_MSG("create_service() failed to allocate request typesupport");
       return nullptr;
@@ -224,7 +224,7 @@ rmw_create_service(
     request_fastdds_type.reset(tsupport);
   }
   if (!response_fastdds_type) {
-    auto tsupport = new (std::nothrow) ResponseTypeSupport_cpp(service_members);
+    auto tsupport = new (std::nothrow) ResponseTypeSupport_cpp(service_members, type_supports->response_typesupport);
     if (!tsupport) {
       RMW_SET_ERROR_MSG("create_service() failed to allocate response typesupport");
       return nullptr;

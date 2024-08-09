@@ -176,7 +176,7 @@ rmw_fastrtps_cpp::create_publisher(
   /////
   // Create the Type Support struct
   if (!fastdds_type) {
-    auto tsupport = new (std::nothrow) MessageTypeSupport_cpp(callbacks);
+    auto tsupport = new (std::nothrow) MessageTypeSupport_cpp(callbacks, type_supports);
     if (!tsupport) {
       RMW_SET_ERROR_MSG("create_publisher() failed to allocate MessageTypeSupport");
       return nullptr;

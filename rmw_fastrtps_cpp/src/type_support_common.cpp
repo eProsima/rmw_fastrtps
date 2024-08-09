@@ -23,7 +23,9 @@
 namespace rmw_fastrtps_cpp
 {
 
-TypeSupport::TypeSupport()
+TypeSupport::TypeSupport(
+  const rosidl_message_type_support_t * type_supports
+) : rmw_fastrtps_shared_cpp::TypeSupport(type_supports)
 {
   m_isGetKeyDefined = false;
   max_size_bound_ = false;
@@ -129,7 +131,10 @@ bool TypeSupport::deserializeROSmessage(
   return true;
 }
 
-MessageTypeSupport::MessageTypeSupport(const message_type_support_callbacks_t * members)
+MessageTypeSupport::MessageTypeSupport(
+  const message_type_support_callbacks_t * members,
+  const rosidl_message_type_support_t * type_supports)
+  : rmw_fastrtps_cpp::TypeSupport(type_supports)
 {
   assert(members);
 
@@ -139,11 +144,15 @@ MessageTypeSupport::MessageTypeSupport(const message_type_support_callbacks_t * 
   set_members(members);
 }
 
-ServiceTypeSupport::ServiceTypeSupport()
+ServiceTypeSupport::ServiceTypeSupport(const rosidl_message_type_support_t * type_supports)
+  : rmw_fastrtps_cpp::TypeSupport(type_supports)
 {
 }
 
-RequestTypeSupport::RequestTypeSupport(const service_type_support_callbacks_t * members)
+RequestTypeSupport::RequestTypeSupport(
+  const service_type_support_callbacks_t * members,
+  const rosidl_message_type_support_t * type_supports)
+  : ServiceTypeSupport(type_supports)
 {
   assert(members);
 
@@ -155,7 +164,10 @@ RequestTypeSupport::RequestTypeSupport(const service_type_support_callbacks_t * 
   set_members(msg);
 }
 
-ResponseTypeSupport::ResponseTypeSupport(const service_type_support_callbacks_t * members)
+ResponseTypeSupport::ResponseTypeSupport(
+  const service_type_support_callbacks_t * members,
+  const rosidl_message_type_support_t * type_supports)
+  : ServiceTypeSupport(type_supports)
 {
   assert(members);
 
