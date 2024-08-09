@@ -264,13 +264,13 @@ rmw_create_service(
     response_fastdds_type.reset(tsupport);
   }
 
-  if (ReturnCode_t::RETCODE_OK != request_fastdds_type.register_type(dds_participant)) {
+  if (eprosima::fastdds::dds::RETCODE_OK != request_fastdds_type.register_type(dds_participant)) {
     RMW_SET_ERROR_MSG("create_service() failed to register request type");
     return nullptr;
   }
   info->request_type_support_ = request_fastdds_type;
 
-  if (ReturnCode_t::RETCODE_OK != response_fastdds_type.register_type(dds_participant)) {
+  if (eprosima::fastdds::dds::RETCODE_OK != response_fastdds_type.register_type(dds_participant)) {
     RMW_SET_ERROR_MSG("create_service() failed to register response type");
     return nullptr;
   }
