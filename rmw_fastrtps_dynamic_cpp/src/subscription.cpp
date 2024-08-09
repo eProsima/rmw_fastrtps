@@ -207,7 +207,7 @@ create_subscription(
     return nullptr;
   }
 
-  if (ReturnCode_t::RETCODE_OK != fastdds_type.register_type(dds_participant)) {
+  if (eprosima::fastdds::dds::RETCODE_OK != fastdds_type.register_type(dds_participant)) {
     RMW_SET_ERROR_MSG("create_subscription() failed to register type");
     return nullptr;
   }
