@@ -130,7 +130,7 @@ __rmw_publisher_wait_for_all_acked(
 
   auto info = static_cast<CustomPublisherInfo *>(publisher->data);
 
-  eprosima::fastdds::Duration_t timeout = rmw_time_to_fastrtps(wait_timeout);
+  eprosima::fastdds::dds::Duration_t timeout = rmw_time_to_fastrtps(wait_timeout);
 
   eprosima::fastdds::dds::ReturnCode_t ret = info->data_writer_->wait_for_acknowledgments(timeout);
   if (eprosima::fastdds::dds::RETCODE_OK == ret) {

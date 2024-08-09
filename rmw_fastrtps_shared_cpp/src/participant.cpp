@@ -321,7 +321,7 @@ rmw_fastrtps_shared_cpp::create_participant(
     if (rmw_dds_common::get_security_files(
         true, "file://", security_options->security_root_path, security_files_paths))
     {
-      eprosima::fastrtps::rtps::PropertyPolicy property_policy;
+      eprosima::fastdds::rtps::PropertyPolicy property_policy;
       property_policy.properties().emplace_back(
         "dds.sec.auth.plugin", "builtin.PKI-DH");
       property_policy.properties().emplace_back(

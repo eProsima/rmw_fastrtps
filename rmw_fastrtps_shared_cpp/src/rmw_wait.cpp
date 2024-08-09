@@ -209,7 +209,7 @@ __rmw_wait(
 
     Duration_t timeout = (wait_timeout) ?
       Duration_t{static_cast<int32_t>(wait_timeout->sec),
-      static_cast<uint32_t>(wait_timeout->nsec)} : eprosima::fastrtps::c_TimeInfinite;
+      static_cast<uint32_t>(wait_timeout->nsec)} : eprosima::fastdds::dds::c_TimeInfinite;
 
     eprosima::fastdds::dds::ConditionSeq triggered_conditions;
     ReturnCode_t ret_code = fastdds_wait_set->wait(
