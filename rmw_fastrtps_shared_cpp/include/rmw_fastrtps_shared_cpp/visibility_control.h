@@ -19,8 +19,8 @@
  * library cannot have, but the consuming code must have inorder to link.
  */
 
-#ifndef RMW_FASTDDS_SHARED_CPP__VISIBILITY_CONTROL_H_
-#define RMW_FASTDDS_SHARED_CPP__VISIBILITY_CONTROL_H_
+#ifndef RMW_FASTRTPS_SHARED_CPP__VISIBILITY_CONTROL_H_
+#define RMW_FASTRTPS_SHARED_CPP__VISIBILITY_CONTROL_H_
 
 // This logic was borrowed (then namespaced) from the examples on the gcc wiki:
 //     https://gcc.gnu.org/wiki/Visibility
@@ -53,4 +53,4 @@
   #define RMW_FASTDDS_SHARED_CPP_PUBLIC_TYPE
 #endif
 
-#endif  // RMW_FASTDDS_SHARED_CPP__VISIBILITY_CONTROL_H_
+#endif  // RMW_FASTRTPS_SHARED_CPP__VISIBILITY_CONTROL_H_
