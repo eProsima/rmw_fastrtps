@@ -21,8 +21,6 @@
 #include <fastdds/dds/subscriber/qos/DataReaderQos.hpp>
 #include <fastdds/dds/topic/qos/TopicQos.hpp>
 
-#include "fastdds/dds/core/policy/QosPolicies.hpp"
-
 #include "rmw/rmw.h"
 
 #include "rmw_fastrtps_shared_cpp/visibility_control.h"

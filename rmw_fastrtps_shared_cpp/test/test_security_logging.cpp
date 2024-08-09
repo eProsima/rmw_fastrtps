@@ -16,10 +16,10 @@
 #include <string>
 #include <vector>
 
-#include "fastdds/rtps/common/Property.h"
-#include "fastdds/rtps/attributes/PropertyPolicy.h"
+#include "fastdds/rtps/common/Property.hpp"
+#include "fastdds/rtps/attributes/PropertyPolicy.hpp"
 
-#include "fastrtps/config.h"
+#include "fastdds/config.hpp"
 #include "rcutils/filesystem.h"
 #include "rmw/error_handling.h"
 #include "rmw/security_options.h"
