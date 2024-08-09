@@ -28,9 +28,9 @@
 #include "fastdds/dds/publisher/Publisher.hpp"
 #include "fastdds/dds/subscriber/Subscriber.hpp"
 
+#include "fastdds/rtps/builtin/data/PublicationBuiltinTopicData.hpp"
+#include "fastdds/rtps/builtin/data/SubscriptionBuiltinTopicData.hpp"
 #include "fastdds/rtps/participant/ParticipantDiscoveryInfo.hpp"
-#include "fastdds/rtps/reader/ReaderDiscoveryInfo.hpp"
-#include "fastdds/rtps/writer/WriterDiscoveryInfo.hpp"
 
 #include "rcpputils/thread_safety_annotations.hpp"
 #include "rcutils/logging_macros.h"
