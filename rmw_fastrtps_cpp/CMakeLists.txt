@@ -50,7 +50,7 @@ find_package(rosidl_runtime_c REQUIRED)
 find_package(rosidl_typesupport_fastrtps_c REQUIRED)
 find_package(rosidl_typesupport_fastrtps_cpp REQUIRED)
 
-include_direcmories(include)
+include_directories(include)
 
 add_library(rmw_fastrtps_cpp
   src/get_client.cpp
