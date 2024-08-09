@@ -59,7 +59,7 @@
 
 #include "type_support_common.hpp"
 
-using PropertyPolicyHelper = eprosima::fastrtps::rtps::PropertyPolicyHelper;
+using PropertyPolicyHelper = eprosima::fastdds::rtps::PropertyPolicyHelper;
 
 namespace rmw_fastrtps_cpp
 {
@@ -378,7 +378,7 @@ __create_dynamic_subscription(
 
   if (!participant_info->leave_middleware_default_qos) {
     reader_qos.endpoint().history_memory_policy =
-      eprosima::fastrtps::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
+      eprosima::fastdds::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
 
     reader_qos.data_sharing().off();
   }
@@ -645,7 +645,7 @@ __create_subscription(
 
   if (!participant_info->leave_middleware_default_qos) {
     reader_qos.endpoint().history_memory_policy =
-      eprosima::fastrtps::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
+      eprosima::fastdds::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
 
     reader_qos.data_sharing().off();
   }
