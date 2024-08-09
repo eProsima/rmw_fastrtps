@@ -184,8 +184,8 @@ __create_dynamic_subscription(
   // Find and check existing topic and type
 
   // Create Topic and Type names
-  auto dyn_type_ptr = eprosima::fastrtps::types::DynamicType_ptr(
-    *static_cast<eprosima::fastrtps::types::DynamicType_ptr *>(
+  auto dyn_type_ptr = eprosima::fastdds::dds::DynamicType::_ref_type(
+    *static_cast<eprosima::fastdds::dds::DynamicType::_ref_type *>(
       ts_impl->dynamic_message_type->impl.handle));
 
   // Check if we need to split the name into namespace and type name
