@@ -25,10 +25,9 @@
 #include "fastdds/dds/topic/TopicDescription.hpp"
 #include "fastdds/dds/topic/qos/TopicQos.hpp"
 
-#include "fastdds/rtps/resources/ResourceManagement.h"
+#include "fastdds/rtps/attributes/ResourceManagement.hpp"
 
-#include "fastrtps/types/DynamicType.h"
-#include "fastrtps/types/DynamicTypePtr.h"
+#include "fastdds/dds/xtypes/dynamic_types/DynamicType.hpp"
 
 #include "rcutils/allocator.h"
 #include "rcutils/error_handling.h"
