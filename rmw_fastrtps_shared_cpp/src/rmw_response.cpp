@@ -66,7 +66,9 @@ __rmw_take_response(
   const_cast<void **>(data_values.buffer())[0] = &data;
   eprosima::fastdds::dds::SampleInfoSeq info_seq{1};
 
-  if (ReturnCode_t::RETCODE_OK == info->response_reader_->take(data_values, info_seq, 1)) {
+  if (eprosima::fastdds::dds::RETCODE_OK ==
+    info->response_reader_->take(data_values, info_seq, 1))
+  {
     if (info_seq[0].valid_data) {
       response.sample_identity_ = info_seq[0].related_sample_identity;
 

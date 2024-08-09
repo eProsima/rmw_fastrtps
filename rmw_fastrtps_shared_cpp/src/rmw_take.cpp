@@ -94,7 +94,7 @@ _take(
   const_cast<void **>(data_values.buffer())[0] = &data;
   eprosima::fastdds::dds::SampleInfoSeq info_seq{1};
 
-  while (ReturnCode_t::RETCODE_OK == info->data_reader_->take(data_values, info_seq, 1)) {
+  while (eprosima::fastdds::dds::RETCODE_OK == info->data_reader_->take(data_values, info_seq, 1)) {
     // The info->data_reader_->take() call already modified the ros_message arg
     // See rmw_fastrtps_shared_cpp/src/TypeSupport_impl.cpp
 
@@ -321,7 +321,7 @@ _take_serialized_message(
   const_cast<void **>(data_values.buffer())[0] = &data;
   eprosima::fastdds::dds::SampleInfoSeq info_seq{1};
 
-  while (ReturnCode_t::RETCODE_OK == info->data_reader_->take(data_values, info_seq, 1)) {
+  while (eprosima::fastdds::dds::RETCODE_OK == info->data_reader_->take(data_values, info_seq, 1)) {
     auto reset = rcpputils::make_scope_exit(
       [&]()
       {
@@ -433,7 +433,7 @@ _take_dynamic_message(
   const_cast<void **>(data_values.buffer())[0] = &data;
   eprosima::fastdds::dds::SampleInfoSeq info_seq{1};
 
-  while (ReturnCode_t::RETCODE_OK == info->data_reader_->take(data_values, info_seq, 1)) {
+  while (eprosima::fastdds::dds::RETCODE_OK == info->data_reader_->take(data_values, info_seq, 1)) {
     // The info->data_reader_->take() call already modified the dynamic_data arg
     // See rmw_fastrtps_shared_cpp/src/TypeSupport_impl.cpp
 
@@ -597,7 +597,9 @@ __rmw_take_loaned_message_internal(
 
   auto item = std::make_unique<rmw_fastrtps_shared_cpp::LoanManager::Item>();
 
-  while (ReturnCode_t::RETCODE_OK == info->data_reader_->take(item->data_seq, item->info_seq, 1)) {
+  while (eprosima::fastdds::dds::RETCODE_OK ==
+    info->data_reader_->take(item->data_seq, item->info_seq, 1))
+  {
     if (item->info_seq[0].valid_data) {
       if (nullptr != message_info) {
         _assign_message_info(identifier, message_info, &item->info_seq[0]);

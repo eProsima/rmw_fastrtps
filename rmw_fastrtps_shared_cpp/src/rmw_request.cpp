@@ -106,7 +106,9 @@ __rmw_take_request(
     const_cast<void **>(data_values.buffer())[0] = &data;
     eprosima::fastdds::dds::SampleInfoSeq info_seq{1};
 
-    if (ReturnCode_t::RETCODE_OK == info->request_reader_->take(data_values, info_seq, 1)) {
+    if (eprosima::fastdds::dds::RETCODE_OK ==
+      info->request_reader_->take(data_values, info_seq, 1))
+    {
       if (info_seq[0].valid_data) {
         request.sample_identity_ = info_seq[0].sample_identity;
         // Use response subscriber guid (on related_sample_identity) when present.
