@@ -25,7 +25,7 @@
 #include "fastdds/dds/topic/TypeSupport.hpp"
 #include "fastdds/dds/topic/qos/TopicQos.hpp"
 
-#include "fastdds/rtps/resources/ResourceManagement.h"
+#include "fastdds/rtps/attributes/ResourceManagement.hpp"
 
 #include "rcpputils/scope_exit.hpp"
 #include "rcutils/logging_macros.h"
