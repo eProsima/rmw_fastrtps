@@ -575,6 +575,18 @@ TypeIdentifierPair GetTypeIdentifier(
   const MembersType * members)
 {
   // TODO(richiware) Try to get typeidentifiers. If not registered, register them.
+  TypeIdentifierPair type_identifiers;
+  if (eprosima::fastdds::dds::RETCODE_OK !=
+          eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().
+          get_type_identifiers(
+            type_name, type_identifiers))
+  {
+    // TODO(MarioDL) Register them
+  }
+  else
+  {
+    return type_identifiers;
+  }
 }
 
 template<typename MembersType>
@@ -604,7 +616,8 @@ void TypeSupport::register_type_object_representation()
   {
     type_identifiers_ =
       register_type_identifiers<rosidl_typesupport_introspection_c__MessageMembers>(
-      type_support_intro->data, get_name()); //TODO(richiware) is the name set here in TypeSupport in ROS2? check.
+      type_support_intro->data, get_name());
+      // TODO(richiware) is the name set here in TypeSupport in ROS2? check.
   } else {
     type_identifiers_ =
       register_type_identifiers<rosidl_typesupport_introspection_cpp::MessageMembers>(
