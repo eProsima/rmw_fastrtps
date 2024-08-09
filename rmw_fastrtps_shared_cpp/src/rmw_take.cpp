@@ -566,7 +566,9 @@ __init_subscription_for_loans(
 {
   auto info = static_cast<CustomSubscriberInfo *>(subscription->data);
   const auto & qos = info->data_reader_->get_qos();
-  subscription->can_loan_messages = info->type_support_->is_plain();
+  // The type support in the RMW implementation is always XCDR1.
+  subscription->can_loan_messages =
+    info->type_support_->is_plain(eprosima::fastdds::dds::XCDR_DATA_REPRESENTATION);
   if (subscription->can_loan_messages) {
     const auto & allocation_qos = qos.reader_resource_limits().outstanding_reads_allocation;
     info->loan_manager_ = std::make_shared<LoanManager>(allocation_qos);
