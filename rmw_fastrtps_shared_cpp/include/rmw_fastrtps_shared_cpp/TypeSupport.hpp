@@ -119,6 +119,12 @@ public:
   RMW_FASTDDS_SHARED_CPP_PUBLIC void register_type_object_representation() override;
 
   RMW_FASTDDS_SHARED_CPP_PUBLIC
+  inline const rosidl_message_type_support_t * ros_message_type_supports() const
+  {
+    return type_supports_;
+  }
+
+  RMW_FASTDDS_SHARED_CPP_PUBLIC
   virtual ~TypeSupport() {}
 
 protected:
