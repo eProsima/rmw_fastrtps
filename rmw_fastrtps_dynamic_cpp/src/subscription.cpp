@@ -23,7 +23,7 @@
 #include "fastdds/dds/topic/TopicDescription.hpp"
 #include "fastdds/dds/topic/qos/TopicQos.hpp"
 
-#include "fastdds/rtps/resources/ResourceManagement.h"
+#include "fastdds/rtps/attributes/ResourceManagement.hpp"
 
 #include "rcutils/error_handling.h"
 
@@ -45,9 +45,8 @@
 #include "rmw_fastrtps_shared_cpp/subscription.hpp"
 #include "rmw_fastrtps_shared_cpp/utils.hpp"
 
-#include "fastrtps/participant/Participant.h"
-#include "fastrtps/subscriber/Subscriber.h"
-#include "fastrtps/xmlparser/XMLProfileManager.h"
+#include "fastdds/dds/domain/DomainParticipant.hpp"
+#include "fastdds/dds/subscriber/Subscriber.hpp"
 
 #include "rmw_fastrtps_dynamic_cpp/identifier.hpp"
 
@@ -55,7 +54,7 @@
 #include "type_support_common.hpp"
 #include "type_support_registry.hpp"
 
-using PropertyPolicyHelper = eprosima::fastrtps::rtps::PropertyPolicyHelper;
+using PropertyPolicyHelper = eprosima::fastdds::rtps::PropertyPolicyHelper;
 
 namespace rmw_fastrtps_dynamic_cpp
 {
@@ -261,7 +260,7 @@ create_subscription(
 
   if (!participant_info->leave_middleware_default_qos) {
     reader_qos.endpoint().history_memory_policy =
-      eprosima::fastrtps::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
+      eprosima::fastdds::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
 
     reader_qos.data_sharing().off();
   }
