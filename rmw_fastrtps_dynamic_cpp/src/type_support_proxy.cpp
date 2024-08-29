@@ -18,6 +18,7 @@ namespace rmw_fastrtps_dynamic_cpp
 {
 
 TypeSupportProxy::TypeSupportProxy(rmw_fastrtps_shared_cpp::TypeSupport * inner_type)
+  : rmw_fastrtps_shared_cpp::TypeSupport(inner_type->ros_message_type_supports())
 {
   set_name(inner_type->get_name());
   max_serialized_type_size = inner_type->max_serialized_type_size;

@@ -67,6 +67,17 @@ TypeSupport<MembersType>::TypeSupport(const void * ros_type_support)
   is_plain_ = false;
 }
 
+template<typename MembersType>
+TypeSupport<MembersType>::TypeSupport(
+  const void * ros_type_support,
+  const void * ros_message_type_supports)
+: BaseTypeSupport(ros_type_support, ros_message_type_supports)
+{
+  is_compute_key_provided = false;
+  max_size_bound_ = false;
+  is_plain_ = false;
+}
+
 // C++ specialization
 template<typename T>
 void serialize_field(
