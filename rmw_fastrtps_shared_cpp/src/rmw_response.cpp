@@ -161,7 +161,7 @@ __rmw_send_response(
   data.type = FASTDDS_SERIALIZED_DATA_TYPE_ROS_MESSAGE;
   data.data = const_cast<void *>(ros_response);
   data.impl = info->response_type_support_impl_;
-  if (info->response_writer_->write(&data, wparams)) {
+  if (eprosima::fastdds::dds::RETCODE_OK == info->response_writer_->write(&data, wparams)) {
     returnedValue = RMW_RET_OK;
   } else {
     RMW_SET_ERROR_MSG("cannot publish data");
