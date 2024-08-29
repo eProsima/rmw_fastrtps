@@ -69,7 +69,7 @@ bool TypeSupport::serialize(
   assert(data);
   static_cast<void>(data_representation);
 
-  auto ser_data = static_cast<const SerializedData * const>(data);
+  const SerializedData * const ser_data = static_cast<const SerializedData *>(data);
 
   switch (ser_data->type) {
     case FASTDDS_SERIALIZED_DATA_TYPE_ROS_MESSAGE:
@@ -173,7 +173,7 @@ uint32_t TypeSupport::calculate_serialized_size(
   assert(data);
   static_cast<void>(data_representation);
 
-  auto ser_data = static_cast<const SerializedData * const>(data);
+  const SerializedData * const ser_data = static_cast<const SerializedData *>(data);
   uint32_t ser_size {0};
   if (ser_data->type == FASTDDS_SERIALIZED_DATA_TYPE_CDR_BUFFER) {
     auto ser = static_cast<eprosima::fastcdr::Cdr *>(ser_data->data);
@@ -255,7 +255,7 @@ _create_type_name(const MembersType * members)
 typedef std::pair<TypeIdentifier, std::string> MemberIdentifierName;
 
 template<typename MembersType>
-MemberIdentifierName GetTypeIdentifier(const MembersType * member, uint32_t index);
+MemberIdentifierName GetTypeIdentifier(const MembersType * members, uint32_t index);
 
 template<typename MembersType>
 TypeIdentifierPair register_type_identifiers(
@@ -285,6 +285,7 @@ TypeIdentifierPair register_type_identifiers(
     }
 
     TypeIdentifierPair type_ids;
+    type_ids.type_identifier1(pair.first);
     StructMemberFlag member_flags {TypeObjectUtils::build_struct_member_flag(
         eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
         false, false, false, false)};
@@ -298,7 +299,7 @@ TypeIdentifierPair register_type_identifiers(
       rcutils_reset_error();
       RMW_SET_ERROR_MSG_WITH_FORMAT_STRING(
         "Structure %s member TypeIdentifier inconsistent.",
-        pair.second);
+        pair.second.c_str());
       return {};
     }
     CompleteMemberDetail member_detail {TypeObjectUtils::build_complete_member_detail(
@@ -318,7 +319,7 @@ TypeIdentifierPair register_type_identifiers(
     rcutils_reset_error();
     RMW_SET_ERROR_MSG_WITH_FORMAT_STRING(
       "%s already registered in TypeObjectRegistry for a different type.",
-      type_name);
+      type_name.c_str());
     return {};
   }
 
@@ -333,7 +334,6 @@ MemberIdentifierName GetTypeIdentifier(const MembersType * members, uint32_t ind
   std::string name = member->name_;
 
   std::string type_name;
-  bool complete_type = false;
   switch (member->type_id_) {
     case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_FLOAT:
       {
@@ -492,7 +492,7 @@ MemberIdentifierName GetTypeIdentifier(const MembersType * members, uint32_t ind
 
   if (!type_name.empty()) {
     if (member->array_size_) {
-      if (!member->is_upper_bound_) {
+      if (member->is_upper_bound_) {
         std::string array_type_name {"anonymous_array_" + type_name + "_" + std::to_string(
             member->array_size_)};
         if (eprosima::fastdds::dds::RETCODE_OK !=
@@ -507,6 +507,8 @@ MemberIdentifierName GetTypeIdentifier(const MembersType * members, uint32_t ind
           }
           eprosima::fastdds::dds::xtypes::PlainCollectionHeader header {TypeObjectUtils::
             build_plain_collection_header(equiv_kind, 0)};
+          bool ec = false;
+          TypeIdentifier* element_identifier = { new TypeIdentifier(TypeObjectUtils::retrieve_complete_type_identifier(type_identifiers, ec))};
           if (255 < member->array_size_) {
             eprosima::fastdds::dds::xtypes::LBoundSeq array_bound_seq;
             TypeObjectUtils::add_array_dimension(
@@ -515,10 +517,7 @@ MemberIdentifierName GetTypeIdentifier(const MembersType * members, uint32_t ind
             eprosima::fastdds::dds::xtypes::PlainArrayLElemDefn array_ldefn {TypeObjectUtils::
               build_plain_array_l_elem_defn(
                 header, array_bound_seq,
-                eprosima::fastcdr::external<TypeIdentifier>(
-                  new TypeIdentifier(
-                    type_identifiers.
-                    type_identifier1())))};
+                eprosima::fastcdr::external<TypeIdentifier>(element_identifier))};
             TypeObjectUtils::build_and_register_l_array_type_identifier(
               array_ldefn,
               array_type_name,
@@ -531,10 +530,7 @@ MemberIdentifierName GetTypeIdentifier(const MembersType * members, uint32_t ind
             eprosima::fastdds::dds::xtypes::PlainArraySElemDefn array_sdefn {TypeObjectUtils::
               build_plain_array_s_elem_defn(
                 header, array_bound_seq,
-                eprosima::fastcdr::external<TypeIdentifier>(
-                  new TypeIdentifier(
-                    type_identifiers.
-                    type_identifier1())))};
+                eprosima::fastcdr::external<TypeIdentifier>(element_identifier))};
             TypeObjectUtils::build_and_register_s_array_type_identifier(
               array_sdefn,
               array_type_name,
@@ -550,14 +546,13 @@ MemberIdentifierName GetTypeIdentifier(const MembersType * members, uint32_t ind
         }
         eprosima::fastdds::dds::xtypes::PlainCollectionHeader header {TypeObjectUtils::
           build_plain_collection_header(equiv_kind, 0)};
+        bool ec = false;
+        TypeIdentifier* element_identifier = { new TypeIdentifier(TypeObjectUtils::retrieve_complete_type_identifier(type_identifiers, ec))};
         eprosima::fastdds::dds::xtypes::SBound bound {0};
         eprosima::fastdds::dds::xtypes::PlainSequenceSElemDefn seq_sdefn {TypeObjectUtils::
           build_plain_sequence_s_elem_defn(
             header, bound,
-            eprosima::fastcdr::external<TypeIdentifier>(
-              new TypeIdentifier(
-                type_identifiers.
-                type_identifier1())))};
+            eprosima::fastcdr::external<TypeIdentifier>(element_identifier))};
         TypeObjectUtils::build_and_register_s_sequence_type_identifier(
           seq_sdefn,
           sequence_type_name,
@@ -574,19 +569,9 @@ TypeIdentifierPair GetTypeIdentifier(
   const std::string & type_name,
   const MembersType * members)
 {
-  // TODO(richiware) Try to get typeidentifiers. If not registered, register them.
-  TypeIdentifierPair type_identifiers;
-  if (eprosima::fastdds::dds::RETCODE_OK !=
-          eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().
-          get_type_identifiers(
-            type_name, type_identifiers))
-  {
-    // TODO(MarioDL) Register them
-  }
-  else
-  {
-    return type_identifiers;
-  }
+  // The following method tries to get the typeidentifiers and
+  // if not regeistered, it registers them.
+  return register_type_identifiers(type_name, members);
 }
 
 template<typename MembersType>
