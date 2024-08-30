@@ -500,68 +500,102 @@ MemberIdentifierName GetTypeIdentifier(const MembersType * members, uint32_t ind
           get_type_identifiers(
             array_type_name, type_identifiers))
         {
-          eprosima::fastdds::dds::xtypes::EquivalenceKind equiv_kind {eprosima::fastdds::dds::xtypes
-            ::EK_COMPLETE};
-          if (eprosima::fastdds::dds::xtypes::TK_NONE == type_identifiers.type_identifier2()._d()) {
-            equiv_kind = eprosima::fastdds::dds::xtypes::EK_BOTH;
-          }
-          eprosima::fastdds::dds::xtypes::PlainCollectionHeader header {TypeObjectUtils::
-            build_plain_collection_header(equiv_kind, 0)};
-          bool ec = false;
-          TypeIdentifier* element_identifier = { new TypeIdentifier(TypeObjectUtils::retrieve_complete_type_identifier(type_identifiers, ec))};
-          if (255 < member->array_size_) {
-            eprosima::fastdds::dds::xtypes::LBoundSeq array_bound_seq;
-            TypeObjectUtils::add_array_dimension(
-              array_bound_seq,
-              static_cast<eprosima::fastdds::dds::xtypes::LBound>(member->array_size_));
-            eprosima::fastdds::dds::xtypes::PlainArrayLElemDefn array_ldefn {TypeObjectUtils::
-              build_plain_array_l_elem_defn(
-                header, array_bound_seq,
-                eprosima::fastcdr::external<TypeIdentifier>(element_identifier))};
-            TypeObjectUtils::build_and_register_l_array_type_identifier(
-              array_ldefn,
-              array_type_name,
-              type_identifiers);
-          } else {
-            eprosima::fastdds::dds::xtypes::SBoundSeq array_bound_seq;
-            TypeObjectUtils::add_array_dimension(
-              array_bound_seq,
-              static_cast<eprosima::fastdds::dds::xtypes::SBound>(member->array_size_));
-            eprosima::fastdds::dds::xtypes::PlainArraySElemDefn array_sdefn {TypeObjectUtils::
-              build_plain_array_s_elem_defn(
-                header, array_bound_seq,
-                eprosima::fastcdr::external<TypeIdentifier>(element_identifier))};
-            TypeObjectUtils::build_and_register_s_array_type_identifier(
-              array_sdefn,
-              array_type_name,
-              type_identifiers);
+          eprosima::fastdds::dds::xtypes::TypeIdentifierPair element_type_identifiers;
+          if (eprosima::fastdds::dds::RETCODE_OK ==
+            eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry()
+            .get_type_identifiers(
+              type_name, element_type_identifiers))
+          {
+            eprosima::fastdds::dds::xtypes::EquivalenceKind equiv_kind {eprosima::fastdds::dds::
+              xtypes
+              ::EK_COMPLETE};
+            if (eprosima::fastdds::dds::xtypes::TK_NONE ==
+              element_type_identifiers.type_identifier2()._d())
+            {
+              equiv_kind = eprosima::fastdds::dds::xtypes::EK_BOTH;
+            }
+            eprosima::fastdds::dds::xtypes::PlainCollectionHeader header {TypeObjectUtils::
+              build_plain_collection_header(equiv_kind, 0)};
+            bool ec = false;
+            TypeIdentifier * element_identifier = {new TypeIdentifier(
+                TypeObjectUtils::retrieve_complete_type_identifier(
+                  element_type_identifiers,
+                  ec))};
+            if (255 < member->array_size_) {
+              eprosima::fastdds::dds::xtypes::LBoundSeq array_bound_seq;
+              TypeObjectUtils::add_array_dimension(
+                array_bound_seq,
+                static_cast<eprosima::fastdds::dds::xtypes::LBound>(member->array_size_));
+              eprosima::fastdds::dds::xtypes::PlainArrayLElemDefn array_ldefn {TypeObjectUtils::
+                build_plain_array_l_elem_defn(
+                  header, array_bound_seq,
+                  eprosima::fastcdr::external<TypeIdentifier>(element_identifier))};
+              TypeObjectUtils::build_and_register_l_array_type_identifier(
+                array_ldefn,
+                array_type_name,
+                type_identifiers);
+            } else {
+              eprosima::fastdds::dds::xtypes::SBoundSeq array_bound_seq;
+              TypeObjectUtils::add_array_dimension(
+                array_bound_seq,
+                static_cast<eprosima::fastdds::dds::xtypes::SBound>(member->array_size_));
+              eprosima::fastdds::dds::xtypes::PlainArraySElemDefn array_sdefn {TypeObjectUtils::
+                build_plain_array_s_elem_defn(
+                  header, array_bound_seq,
+                  eprosima::fastcdr::external<TypeIdentifier>(element_identifier))};
+              TypeObjectUtils::build_and_register_s_array_type_identifier(
+                array_sdefn,
+                array_type_name,
+                type_identifiers);
+            }
           }
         }
       } else {
         std::string sequence_type_name {"anonymous_sequence_" + type_name + "_unbounded"};
-        eprosima::fastdds::dds::xtypes::EquivalenceKind equiv_kind {eprosima::fastdds::dds::xtypes::
-          EK_COMPLETE};
-        if (eprosima::fastdds::dds::xtypes::TK_NONE == type_identifiers.type_identifier2()._d()) {
-          equiv_kind = eprosima::fastdds::dds::xtypes::EK_BOTH;
+        if (eprosima::fastdds::dds::RETCODE_OK !=
+          eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().
+          get_type_identifiers(
+            sequence_type_name, type_identifiers))
+        {
+          eprosima::fastdds::dds::xtypes::TypeIdentifierPair element_type_identifiers;
+          if (eprosima::fastdds::dds::RETCODE_OK ==
+            eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry()
+            .get_type_identifiers(
+              type_name, element_type_identifiers))
+          {
+            eprosima::fastdds::dds::xtypes::EquivalenceKind equiv_kind {eprosima::fastdds::dds::
+              xtypes
+              ::
+              EK_COMPLETE};
+            if (eprosima::fastdds::dds::xtypes::TK_NONE ==
+              element_type_identifiers.type_identifier2()._d())
+            {
+              equiv_kind = eprosima::fastdds::dds::xtypes::EK_BOTH;
+            }
+            eprosima::fastdds::dds::xtypes::PlainCollectionHeader header {TypeObjectUtils::
+              build_plain_collection_header(equiv_kind, 0)};
+            bool ec = false;
+            TypeIdentifier * element_identifier = {new TypeIdentifier(
+                TypeObjectUtils::retrieve_complete_type_identifier(
+                  element_type_identifiers,
+                  ec))};
+            eprosima::fastdds::dds::xtypes::SBound bound {0};
+            eprosima::fastdds::dds::xtypes::PlainSequenceSElemDefn seq_sdefn {TypeObjectUtils::
+              build_plain_sequence_s_elem_defn(
+                header, bound,
+                eprosima::fastcdr::external<TypeIdentifier>(element_identifier))};
+            TypeObjectUtils::build_and_register_s_sequence_type_identifier(
+              seq_sdefn,
+              sequence_type_name,
+              type_identifiers);
+          }
         }
-        eprosima::fastdds::dds::xtypes::PlainCollectionHeader header {TypeObjectUtils::
-          build_plain_collection_header(equiv_kind, 0)};
-        bool ec = false;
-        TypeIdentifier* element_identifier = { new TypeIdentifier(TypeObjectUtils::retrieve_complete_type_identifier(type_identifiers, ec))};
-        eprosima::fastdds::dds::xtypes::SBound bound {0};
-        eprosima::fastdds::dds::xtypes::PlainSequenceSElemDefn seq_sdefn {TypeObjectUtils::
-          build_plain_sequence_s_elem_defn(
-            header, bound,
-            eprosima::fastcdr::external<TypeIdentifier>(element_identifier))};
-        TypeObjectUtils::build_and_register_s_sequence_type_identifier(
-          seq_sdefn,
-          sequence_type_name,
-          type_identifiers);
       }
     }
   }
 
-  return {type_identifiers.type_identifier1(), name};
+  bool ec = false;
+  return {TypeObjectUtils::retrieve_complete_type_identifier(type_identifiers, ec), name};
 }
 
 template<typename MembersType>
@@ -602,7 +636,7 @@ void TypeSupport::register_type_object_representation()
     type_identifiers_ =
       register_type_identifiers<rosidl_typesupport_introspection_c__MessageMembers>(
       type_support_intro->data, get_name());
-      // TODO(richiware) is the name set here in TypeSupport in ROS2? check.
+    // TODO(richiware) is the name set here in TypeSupport in ROS2? check.
   } else {
     type_identifiers_ =
       register_type_identifiers<rosidl_typesupport_introspection_cpp::MessageMembers>(
