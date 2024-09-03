@@ -279,7 +279,8 @@ __create_dynamic_subscription(
     //                     We will still need a DynamicPubSubType later on (constructed from a
     //                     DynamicType_ptr) to convert the CDR buffer to a DynamicData, however...
     // fastdds_type.reset(dyn_type_ptr);
-    auto tsupport = new (std::nothrow) TypeSupport_cpp(type_support);  // NOT MessageTypeSupport_cpp!!!
+    auto tsupport = new
+      (std::nothrow) TypeSupport_cpp(type_support);  // NOT MessageTypeSupport_cpp!
     if (!tsupport) {
       RMW_SET_ERROR_MSG("create_subscription() failed to allocate TypeSupport");
       return nullptr;

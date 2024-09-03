@@ -31,7 +31,7 @@ namespace rmw_fastrtps_cpp
 class ServiceTypeSupport : public TypeSupport
 {
 protected:
-  ServiceTypeSupport(const rosidl_message_type_support_t * type_supports);
+  explicit ServiceTypeSupport(const rosidl_message_type_support_t * type_supports);
 };
 
 class RequestTypeSupport : public ServiceTypeSupport
