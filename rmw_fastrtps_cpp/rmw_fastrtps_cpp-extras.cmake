@@ -21,4 +21,4 @@ find_package(FastDDS 3 REQUIRED MODULE)
 
 list(APPEND rmw_fastrtps_cpp_INCLUDE_DIRS ${FAST_INCLUDE_DIR})
 # specific order: dependents before dependencies
-list(APPEND rmw_fastrtps_cpp_LIBRARIES fastrtps fastcdr)
+list(APPEND rmw_fastrtps_cpp_LIBRARIES fastdds fastcdr)

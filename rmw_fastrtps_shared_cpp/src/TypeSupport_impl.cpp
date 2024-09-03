@@ -636,7 +636,6 @@ void TypeSupport::register_type_object_representation()
     type_identifiers_ =
       register_type_identifiers<rosidl_typesupport_introspection_c__MessageMembers>(
       type_support_intro->data, get_name());
-    // TODO(richiware) is the name set here in TypeSupport in ROS2? check.
   } else {
     type_identifiers_ =
       register_type_identifiers<rosidl_typesupport_introspection_cpp::MessageMembers>(
