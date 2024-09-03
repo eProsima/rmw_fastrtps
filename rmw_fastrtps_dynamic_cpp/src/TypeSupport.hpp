@@ -149,10 +149,10 @@ public:
   }
 
 protected:
-
   // Constructor meant to be used by message typesupports
   explicit BaseTypeSupport(const void * ros_type_support)
-  : rmw_fastrtps_shared_cpp::TypeSupport(static_cast<const rosidl_message_type_support_t*>(ros_type_support))
+  : rmw_fastrtps_shared_cpp::TypeSupport(
+      static_cast<const rosidl_message_type_support_t *>(ros_type_support))
   {
     ros_type_support_ = ros_type_support;
   }
@@ -161,14 +161,13 @@ protected:
   explicit BaseTypeSupport(
     const void * ros_type_support,
     const void * ros_message_type_supports)
-  : rmw_fastrtps_shared_cpp::TypeSupport(static_cast<const rosidl_message_type_support_t*>(ros_message_type_supports))
+  : rmw_fastrtps_shared_cpp::TypeSupport(
+      static_cast<const rosidl_message_type_support_t *>(ros_message_type_supports))
   {
     ros_type_support_ = ros_type_support;
   }
 
-
 private:
-
   // Can either be a rosidl_message_type_support_t
   // or rosidl_service_type_support_t
   const void * ros_type_support_;

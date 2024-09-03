@@ -56,7 +56,8 @@ MessageTypeSupport<MembersType>::MessageTypeSupport(
   // Encapsulation size
   this->max_serialized_type_size = 4;
   if (this->members_->member_count_ != 0) {
-    this->max_serialized_type_size += static_cast<uint32_t>(this->calculateMaxSerializedSize(members, 0));
+    this->max_serialized_type_size +=
+      static_cast<uint32_t>(this->calculateMaxSerializedSize(members, 0));
   } else {
     this->max_serialized_type_size++;
   }

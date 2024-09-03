@@ -45,9 +45,6 @@
 #include "rmw_fastrtps_shared_cpp/subscription.hpp"
 #include "rmw_fastrtps_shared_cpp/utils.hpp"
 
-#include "fastdds/dds/domain/DomainParticipant.hpp"
-#include "fastdds/dds/subscriber/Subscriber.hpp"
-
 #include "rmw_fastrtps_dynamic_cpp/identifier.hpp"
 
 #include "subscription.hpp"
