@@ -337,9 +337,10 @@ TypeIdentifierPair register_type_identifiers(
 
     TypeIdentifierPair type_ids;
     type_ids.type_identifier1(pair.first);
+    const auto member = members->members_ + i;
     StructMemberFlag member_flags {TypeObjectUtils::build_struct_member_flag(
         eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
-        false, false, false, false)};
+        false, false, member->is_key_, false)};
     MemberId member_id {static_cast<MemberId>(i)};
     bool common_var {false};
     CommonStructMember member_common{TypeObjectUtils::build_common_struct_member(
@@ -355,9 +356,9 @@ TypeIdentifierPair register_type_identifiers(
     }
     CompleteMemberDetail member_detail {TypeObjectUtils::build_complete_member_detail(
         pair.second, {}, {})};
-    CompleteStructMember member {TypeObjectUtils::build_complete_struct_member(
+    CompleteStructMember struct_member {TypeObjectUtils::build_complete_struct_member(
         member_common, member_detail)};
-    TypeObjectUtils::add_complete_struct_member(member_seq, member);
+    TypeObjectUtils::add_complete_struct_member(member_seq, struct_member);
   }
 
   CompleteStructType struct_type {TypeObjectUtils::build_complete_struct_type(
