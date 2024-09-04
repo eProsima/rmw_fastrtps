@@ -212,12 +212,11 @@ protected:
   const MembersType * members_;
 
 private:
-
   size_t calculateMaxSerializedSize(
     const MembersType * members,
     size_t current_alignment,
     bool compute_key,
-    bool& is_key_unbounded);
+    bool & is_key_unbounded);
 
   size_t getEstimatedSerializedSize(
     const MembersType * members,

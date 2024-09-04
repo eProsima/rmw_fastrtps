@@ -17,6 +17,7 @@
 
 #include <cassert>
 #include <string>
+#include <vector>
 
 #include "fastdds/dds/topic/TopicDataType.hpp"
 #include "fastdds/rtps/common/InstanceHandle.hpp"
@@ -65,6 +66,15 @@ public:
     eprosima::fastdds::rtps::InstanceHandle_t * ihandle,
     bool force_md5,
     const void * impl) const = 0;
+
+  RMW_FASTRTPS_SHARED_CPP_PUBLIC
+  bool compute_key(
+    eprosima::fastdds::rtps::SerializedPayload_t & /* payload */,
+    eprosima::fastdds::rtps::InstanceHandle_t & /* ihandle */,
+    bool /* force_md5 */) override
+  {
+    return false;
+  }
 
   RMW_FASTRTPS_SHARED_CPP_PUBLIC
   bool compute_key(

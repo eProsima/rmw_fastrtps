@@ -63,40 +63,38 @@ void * TypeSupport::create_data()
 }
 
 bool TypeSupport::compute_key(
-    const void* const data,
-    eprosima::fastdds::rtps::InstanceHandle_t& ihandle,
-    bool force_md5)
+  const void * const data,
+  eprosima::fastdds::rtps::InstanceHandle_t & ihandle,
+  bool force_md5)
 {
   assert(data);
 
   bool ret = false;
 
-  if (!is_compute_key_provided)
-  {
-      return ret;
+  if (!is_compute_key_provided) {
+    return ret;
   }
 
   auto ser_data = static_cast<const SerializedData *>(data);
 
-  switch (ser_data->type)
-  {
+  switch (ser_data->type) {
     case FASTDDS_SERIALIZED_DATA_TYPE_ROS_MESSAGE:
       {
         std::lock_guard lock(this->mtx_);
-        ret = this->get_key_hash_from_ros_message(ser_data->data, &ihandle, force_md5, ser_data->impl);
+        ret =
+          this->get_key_hash_from_ros_message(ser_data->data, &ihandle, force_md5, ser_data->impl);
         break;
       }
 
     case FASTDDS_SERIALIZED_DATA_TYPE_CDR_BUFFER:
       {
-        // TODO
+        // TODO(Mario-DL)
         // We would need a get_key_hash_from_payload method
         break;
       }
 
     case FASTDDS_SERIALIZED_DATA_TYPE_DYNAMIC_MESSAGE:
       {
-
         auto m_type = std::make_shared<eprosima::fastdds::dds::DynamicPubSubType>();
 
         // Retrieves the key (ihandle) from the dynamic data stored in data->data
