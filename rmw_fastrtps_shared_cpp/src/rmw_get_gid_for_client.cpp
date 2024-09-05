@@ -38,7 +38,7 @@ __rmw_get_gid_for_client(
   RMW_CHECK_ARGUMENT_FOR_NULL(gid, RMW_RET_INVALID_ARGUMENT);
 
   const auto * info = static_cast<const CustomClientInfo *>(client->data);
-  copy_from_fastrtps_guid_to_byte_array(info->writer_guid_, gid->data);
+  copy_from_fastdds_guid_to_byte_array(info->writer_guid_, gid->data);
   gid->implementation_identifier = identifier;
   return RMW_RET_OK;
 }
