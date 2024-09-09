@@ -62,6 +62,72 @@ void * TypeSupport::create_data()
   return new eprosima::fastcdr::FastBuffer();
 }
 
+bool TypeSupport::compute_key(
+  const void * const data,
+  eprosima::fastdds::rtps::InstanceHandle_t & ihandle,
+  bool force_md5)
+{
+  assert(data);
+
+  bool ret = false;
+
+  if (!is_compute_key_provided) {
+    return ret;
+  }
+
+  auto ser_data = static_cast<const SerializedData *>(data);
+
+  switch (ser_data->type) {
+    case FASTDDS_SERIALIZED_DATA_TYPE_ROS_MESSAGE:
+      {
+        std::lock_guard lock(this->mtx_);
+        ret =
+          this->get_key_hash_from_ros_message(ser_data->data, &ihandle, force_md5, ser_data->impl);
+        break;
+      }
+
+    case FASTDDS_SERIALIZED_DATA_TYPE_CDR_BUFFER:
+      {
+        // Use the CDR buffer to compute the key
+        auto ser = static_cast<eprosima::fastcdr::Cdr*>(ser_data->data);
+
+        // Use a temporary SerializedPayload_t since it is what compute_key API expects.
+        // Directly point to the serialized buffer to avoid copying.
+        eprosima::fastdds::rtps::SerializedPayload_t payload;
+        payload.length = static_cast<uint32_t>(ser->get_serialized_data_length());
+        payload.data = ser->get_buffer_pointer();
+        payload.encapsulation = ser->endianness() ==
+          eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
+
+        // Compute the key using the serialized buffer directly
+        ret = this->compute_key(payload, ihandle, force_md5);
+
+        // Reset the payload data pointer to avoid freeing the serialized buffer
+        payload.data = nullptr;
+        break;
+      }
+
+    case FASTDDS_SERIALIZED_DATA_TYPE_DYNAMIC_MESSAGE:
+      {
+        auto m_type = std::make_shared<eprosima::fastdds::dds::DynamicPubSubType>();
+
+        // Retrieves the key (ihandle) from the dynamic data stored in data->data
+        return m_type->compute_key(
+          static_cast<eprosima::fastdds::dds::DynamicData *>(ser_data->data),
+          ihandle,
+          force_md5);
+
+        break;
+      }
+    default:
+      {
+        break;
+      }
+  }
+
+  return ret;
+}
+
 bool TypeSupport::serialize(
   const void * const data, eprosima::fastdds::rtps::SerializedPayload_t & payload,
   eprosima::fastdds::dds::DataRepresentationId_t data_representation)
@@ -285,9 +351,10 @@ TypeIdentifierPair register_type_identifiers(
 
     TypeIdentifierPair type_ids;
     type_ids.type_identifier1(pair.first);
+    const auto member = members->members_ + i;
     StructMemberFlag member_flags {TypeObjectUtils::build_struct_member_flag(
         eprosima::fastdds::dds::xtypes::TryConstructFailAction::DISCARD,
-        false, false, false, false)};
+        false, false, member->is_key_, false)};
     MemberId member_id {static_cast<MemberId>(i)};
     bool common_var {false};
     CommonStructMember member_common{TypeObjectUtils::build_common_struct_member(
@@ -303,9 +370,9 @@ TypeIdentifierPair register_type_identifiers(
     }
     CompleteMemberDetail member_detail {TypeObjectUtils::build_complete_member_detail(
         pair.second, {}, {})};
-    CompleteStructMember member {TypeObjectUtils::build_complete_struct_member(
+    CompleteStructMember struct_member {TypeObjectUtils::build_complete_struct_member(
         member_common, member_detail)};
-    TypeObjectUtils::add_complete_struct_member(member_seq, member);
+    TypeObjectUtils::add_complete_struct_member(member_seq, struct_member);
   }
 
   CompleteStructType struct_type {TypeObjectUtils::build_complete_struct_type(
