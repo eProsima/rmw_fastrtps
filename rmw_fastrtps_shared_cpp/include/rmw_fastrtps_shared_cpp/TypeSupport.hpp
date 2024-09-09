@@ -22,6 +22,7 @@
 #include "fastdds/dds/topic/TopicDataType.hpp"
 #include "fastdds/rtps/common/InstanceHandle.hpp"
 #include "fastdds/rtps/common/SerializedPayload.hpp"
+#include "fastdds/utils/md5.hpp"
 
 #include "fastcdr/FastBuffer.h"
 #include "fastcdr/Cdr.h"
@@ -73,6 +74,8 @@ public:
     eprosima::fastdds::rtps::InstanceHandle_t & /* ihandle */,
     bool /* force_md5 */) override
   {
+    // We can safely return false here since this method will not be called when receiving data
+    // from Fast DDS writers, and interoperability for topics with keys is not yet a requirement.
     return false;
   }
 

@@ -88,8 +88,22 @@ bool TypeSupport::compute_key(
 
     case FASTDDS_SERIALIZED_DATA_TYPE_CDR_BUFFER:
       {
-        // TODO(Mario-DL)
-        // We would need a get_key_hash_from_payload method
+        // Use the CDR buffer to compute the key
+        auto ser = static_cast<eprosima::fastcdr::Cdr*>(ser_data->data);
+
+        // Use a temporary SerializedPayload_t since it is what compute_key API expects.
+        // Directly point to the serialized buffer to avoid copying.
+        eprosima::fastdds::rtps::SerializedPayload_t payload;
+        payload.length = static_cast<uint32_t>(ser->get_serialized_data_length());
+        payload.data = ser->get_buffer_pointer();
+        payload.encapsulation = ser->endianness() ==
+          eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
+
+        // Compute the key using the serialized buffer directly
+        ret = this->compute_key(payload, ihandle, force_md5);
+
+        // Reset the payload data pointer to avoid freeing the serialized buffer
+        payload.data = nullptr;
         break;
       }
 
