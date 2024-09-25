@@ -97,7 +97,7 @@ bool TypeSupport::compute_key(
         // Directly point to the serialized buffer to avoid copying.
         eprosima::fastdds::rtps::SerializedPayload_t payload;
         payload.length = static_cast<uint32_t>(ser->get_serialized_data_length());
-        payload.data = ser->get_buffer_pointer();
+        payload.data = reinterpret_cast<eprosima::fastdds::rtps::octet*>(ser->get_buffer_pointer());
         payload.encapsulation = ser->endianness() ==
           eprosima::fastcdr::Cdr::BIG_ENDIANNESS ? CDR_BE : CDR_LE;
 
