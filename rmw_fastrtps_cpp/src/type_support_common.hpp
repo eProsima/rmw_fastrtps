@@ -18,6 +18,8 @@
 #include <sstream>
 #include <string>
 
+#include "rcpputils/find_and_replace.hpp"
+
 #include "rmw/error_handling.h"
 
 #include "rmw_fastrtps_shared_cpp/TypeSupport.hpp"
@@ -54,7 +56,9 @@ _create_type_name(
   std::string message_namespace(members->message_namespace_);
   std::string message_name(members->message_name_);
   if (!message_namespace.empty()) {
-    ss << message_namespace << "::";
+    // Find and replace C namespace separator with C++, in case this is using C typesupport
+    std::string message_namespace_new = rcpputils::find_and_replace(message_namespace, "__", "::");
+    ss << message_namespace_new << "::";
   }
   ss << "dds_::" << message_name << "_";
   return ss.str();
