@@ -251,11 +251,11 @@ bool TypeSupport<MembersType>::serializeROSmessage(
         break;
       case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_BYTE:
       case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_UINT8:
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_CHAR:
         serialize_field<uint8_t>(member, field, ser);
         break;
-      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_CHAR:
       case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_INT8:
-        serialize_field<char>(member, field, ser);
+        serialize_field<int8_t>(member, field, ser);
         break;
       case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_FLOAT32:
         serialize_field<float>(member, field, ser);
@@ -587,11 +587,11 @@ size_t TypeSupport<MembersType>::getEstimatedSerializedSize(
         break;
       case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_BYTE:
       case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_UINT8:
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_CHAR:
         current_alignment = next_field_align<uint8_t>(member, field, current_alignment);
         break;
-      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_CHAR:
       case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_INT8:
-        current_alignment = next_field_align<char>(member, field, current_alignment);
+        current_alignment = next_field_align<int8_t>(member, field, current_alignment);
         break;
       case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_FLOAT32:
         current_alignment = next_field_align<float>(member, field, current_alignment);
@@ -833,11 +833,11 @@ bool TypeSupport<MembersType>::deserializeROSmessage(
         break;
       case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_BYTE:
       case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_UINT8:
+      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_CHAR:
         deserialize_field<uint8_t>(member, field, deser);
         break;
-      case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_CHAR:
       case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_INT8:
-        deserialize_field<char>(member, field, deser);
+        deserialize_field<int8_t>(member, field, deser);
         break;
       case ::rosidl_typesupport_introspection_cpp::ROS_TYPE_FLOAT32:
         deserialize_field<float>(member, field, deser);
