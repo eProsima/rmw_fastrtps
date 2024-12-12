@@ -45,6 +45,8 @@
 namespace rmw_fastrtps_shared_cpp
 {
 
+namespace xtypes = eprosima::fastdds::dds::xtypes;
+
 TypeSupport::TypeSupport(
   const rosidl_message_type_support_t * type_supports
 )
@@ -334,8 +336,6 @@ TypeIdentifierPair register_type_identifiers(
   const std::string & type_name,
   const MembersType * members)
 {
-  namespace xtypes = eprosima::fastdds::dds::xtypes;
-
   TypeIdentifierPair struct_type_ids;
   if (eprosima::fastdds::dds::RETCODE_OK ==
     eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->type_object_registry().
